@@ -7,7 +7,7 @@ from model.decoder import Decoder
 
 
 class Transformer(nn.Module):
-    def __init__(self, n_layers, d_model, h, ffn_hidden, p_drop, vocab_size, d_embed, vocab):
+    def __init__(self, n_layers, d_model, h, ffn_hidden, p_drop, d_embed, vocab):
         super(Transformer, self).__init__()
         # encoder
         self.enc_embedding = Embedding(d_embed, vocab)
@@ -18,7 +18,7 @@ class Transformer(nn.Module):
         self.decoder = Decoder(n_layers, d_model, h, ffn_hidden, p_drop)
 
         # linear classifier
-        self.classifier = nn.Linear(d_model, vocab_size)
+        self.classifier = nn.Linear(d_model, vocab.__len__()) # TODO: check
 
     def forward(self, src, tgt):
         # masks

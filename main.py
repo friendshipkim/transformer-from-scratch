@@ -1,4 +1,4 @@
-from config import *  # hyperparameters
+import config # hyperparameters
 from model.transformer import Transformer
 import torchtext.datasets
 from torchtext.datasets import WikiText2
@@ -9,7 +9,6 @@ import torch
 from torch import nn, Tensor
 
 if __name__ == '__main__':
-    # model = Transformer()
     # use IWSLT dataset
     # try smaller PTB dataset
     # train, valid, test = datasets.PennTreebank(root='./data')
@@ -75,3 +74,11 @@ if __name__ == '__main__':
 
     # check if the model copy the unseen input
     # or reverse (change get_batch func)
+
+    model = Transformer(n_layers=config.n_layers,
+                        d_model=config.d_model,
+                        h=config.h,
+                        ffn_hidden=config.ffn_hidden,
+                        p_drop=config.p_drop,
+                        d_embed=config.d_embed,
+                        vocab=vocab)
