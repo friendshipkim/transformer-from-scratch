@@ -1,6 +1,3 @@
-import copy
-
-import torch
 from torch import nn
 
 from model.sublayer.multihead_attention import MultiHeadAttention
@@ -18,17 +15,17 @@ class EncoderLayer(nn.Module):
         self.norm1 = nn.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(p_drop)
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         # 1. attention
-        x_cp = copy.deepcopy(x)
-        x = self.attention(q=x, k=x, v=x, mask=None)
-        x = self.norm1(x + x_cp)
-        x = self.dropout1(x)
+        x_out_dict = self.attention(q=x, k=x, v=x, mask=mask)
+        x_out = x_out_dict["output"]
+
+        x_out = self.norm1(x + x_out)
+        x_out = self.dropout1(x_out)
 
         # 2. feed forward
-        x_cp = copy.deepcopy(x)
-        x = self.ffn(x)
-        x = self.norm2(x + x_cp)
-        x = self.dropout2(x)
+        x_out2 = self.ffn(x_out)
+        x_out2 = self.norm2(x_out + x_out2)
+        x_out2 = self.dropout2(x_out2)
 
-        return x
+        return x_out2

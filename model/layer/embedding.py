@@ -4,8 +4,20 @@ from torch import nn
 
 
 class Embedding(nn.Module):
-    def __init__(self, d_embed, vocab):
+    def __init__(self, d_embed, vocab,max_seq_len):
         super(Embedding, self).__init__()
+        token_embedding = TokenEmbedding(d_embed, vocab)
+        positional_encoding = PositionalEncoding(d_embed, max_seq_len)
+        self.embedding = nn.Sequential(token_embedding, positional_encoding)
+
+    def forward(self, x):
+        out = self.embedding(x)
+        return out
+
+
+class TokenEmbedding(nn.Module):
+    def __init__(self, d_embed, vocab):
+        super(TokenEmbedding, self).__init__()
         self.embedding = nn.Embedding(len(vocab), d_embed)
         self.vocab = vocab
         self.d_embed = d_embed
