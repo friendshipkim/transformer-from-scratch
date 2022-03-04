@@ -10,8 +10,7 @@ import torch
 from torch import nn, Tensor
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     # use IWSLT dataset
     # try smaller PTB dataset
     # train, valid, test = datasets.PennTreebank(root='./data')
@@ -22,19 +21,28 @@ if __name__ == '__main__':
     # build dataloader
 
     # WikiText2
-    train_iter = WikiText2(split='train')
-    tokenizer = get_tokenizer('basic_english')
-    vocab = build_vocab_from_iterator(map(tokenizer, train_iter),  # TODO: what does it mean? map(tokenizer, train_iter)
-                                      specials=['<unk>', '<bos>', '<eos>'])  # we can add <bos>, <eos>
-    vocab.set_default_index(vocab['<unk>'])  # This index will be returned when OOV token is queried
-
+    train_iter = WikiText2(split="train")
+    tokenizer = get_tokenizer("basic_english")
+    vocab = build_vocab_from_iterator(
+        map(
+            tokenizer, train_iter
+        ),  # TODO: what does it mean? map(tokenizer, train_iter)
+        specials=["<unk>", "<bos>", "<eos>"],
+    )  # we can add <bos>, <eos>
+    vocab.set_default_index(
+        vocab["<unk>"]
+    )  # This index will be returned when OOV token is queried
 
     def data_process(raw_text_iter: dataset.IterableDataset) -> Tensor:
         """Converts raw text into a flat Tensor."""
-        data = [torch.tensor(vocab(tokenizer(item)), dtype=torch.long) for item in raw_text_iter]
+        data = [
+            torch.tensor(vocab(tokenizer(item)), dtype=torch.long)
+            for item in raw_text_iter
+        ]
         # vocab method maps tokens to indices.
-        return torch.cat(tuple(filter(lambda t: t.numel() > 0, data))) # TODO: why tuple?
-
+        return torch.cat(
+            tuple(filter(lambda t: t.numel() > 0, data))
+        )  # TODO: why tuple?
 
     # train_iter was "consumed" by the process of building the vocab,
     # so we have to create it again
@@ -43,8 +51,7 @@ if __name__ == '__main__':
     val_data = data_process(val_iter)
     test_data = data_process(test_iter)
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def batchify(data: Tensor, bsz: int) -> Tensor:
         """Divides the data into bsz separate sequences, removing extra elements
@@ -58,10 +65,9 @@ if __name__ == '__main__':
             Tensor of shape [N // bsz, bsz]
         """
         seq_len = data.size(0) // bsz
-        data = data[:seq_len * bsz]
+        data = data[: seq_len * bsz]
         data = data.view(bsz, seq_len).t().contiguous()
         return data.to(device)
-
 
     batch_size = 20
     eval_batch_size = 10
@@ -80,10 +86,12 @@ if __name__ == '__main__':
     # check if the model copy the unseen input
     # or reverse (change get_batch func)
 
-    model = Transformer(n_layers=config.n_layers,
-                        d_model=config.d_model,
-                        h=config.h,
-                        ffn_hidden=config.ffn_hidden,
-                        p_drop=config.p_drop,
-                        d_embed=config.d_embed,
-                        vocab=vocab)
+    model = Transformer(
+        n_layers=config.n_layers,
+        d_model=config.d_model,
+        h=config.h,
+        ffn_hidden=config.ffn_hidden,
+        p_drop=config.p_drop,
+        d_embed=config.d_embed,
+        vocab=vocab,
+    )

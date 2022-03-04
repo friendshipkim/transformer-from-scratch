@@ -9,7 +9,9 @@ def test_embedding():
     batch_size = 16
     max_seq_len = 10
 
-    embedding = Embedding(d_model=d_model, vocab_size=vocab_size, max_seq_len=max_seq_len)
+    embedding = Embedding(
+        d_model=d_model, vocab_size=vocab_size, max_seq_len=max_seq_len
+    )
 
     # inputs
     x = torch.randint(vocab_size, (batch_size, max_seq_len))
@@ -20,5 +22,6 @@ def test_embedding():
 
     return out
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_embedding()

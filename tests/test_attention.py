@@ -28,12 +28,12 @@ def test_attention():
     # print(attn_score)
 
     # check if mask is correctly applied
-    assert ((mask == 0).sum() == (attn_score == 0).sum())
+    assert (mask == 0).sum() == (attn_score == 0).sum()
     # check if the shape is right
-    assert (out.size() == (batch_size, q_max_seq_len, d_model))
+    assert out.size() == (batch_size, q_max_seq_len, d_model)
 
     return out
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_attention()

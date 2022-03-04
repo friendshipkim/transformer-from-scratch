@@ -19,7 +19,9 @@ class DecoderLayer(nn.Module):
         self.norm3 = nn.LayerNorm(d_model)
         self.dropout3 = nn.Dropout(p_drop)
 
-    def forward(self, x: Tensor, enc_output: Tensor, dec_mask: Tensor, cross_mask: Tensor) -> Tensor:
+    def forward(
+        self, x: Tensor, enc_output: Tensor, dec_mask: Tensor, cross_mask: Tensor
+    ) -> Tensor:
         """
         :param x: torch.Tensor, Decoder input, shape: (batch_size, max_seq_len, d_model)
         :param enc_output: torch.Tensor, Encoder output, shape: (batch_size, max_seq_len, d_model)

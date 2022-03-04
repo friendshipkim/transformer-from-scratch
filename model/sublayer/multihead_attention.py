@@ -15,7 +15,9 @@ class MultiHeadAttention(nn.Module):
         self.fc_v = nn.Linear(d_model, d_model)
         self.fc_concat = nn.Linear(d_model, d_model)
 
-    def forward(self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor) -> typing.Dict[str, Tensor]:
+    def forward(
+        self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor
+    ) -> typing.Dict[str, Tensor]:
         # TODO: mask_future necessary?
         """
         :param q: torch.Tensor, shape: (batch_size, q_max_seq_len, d_model)
@@ -43,8 +45,7 @@ class MultiHeadAttention(nn.Module):
         # 5. linear projection after attention
         out = self.fc_concat(out)  # shape: (batch_size, max_seq_len, d_model)
 
-        return {"output": out,
-                "attn_score": attn_score}
+        return {"output": out, "attn_score": attn_score}
 
     def split(self, tensor: Tensor, h: int) -> Tensor:
         """
@@ -64,9 +65,13 @@ class MultiHeadAttention(nn.Module):
         :return: torch.Tensor, shape: (batch_size, max_seq_len, d_model)
         """
         batch_size, h, max_seq_len, d_k = tensor.size()
-        return tensor.transpose(1, 2).contiguous().view(batch_size, max_seq_len, h*d_k)
+        return (
+            tensor.transpose(1, 2).contiguous().view(batch_size, max_seq_len, h * d_k)
+        )
 
-    def calculate_attn(self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor) -> typing.Dict[str, Tensor]:
+    def calculate_attn(
+        self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor
+    ) -> typing.Dict[str, Tensor]:
         """
         calculate scaled dot product attention
 
@@ -79,7 +84,9 @@ class MultiHeadAttention(nn.Module):
         """
 
         # 1. QK^T
-        attn_score = torch.matmul(q, k.transpose(2, 3))  # shape: (batch_size, h, q_max_seq_length, k_max_seq_length)
+        attn_score = torch.matmul(
+            q, k.transpose(2, 3)
+        )  # shape: (batch_size, h, q_max_seq_length, k_max_seq_length)
 
         # 2. scaling
         attn_score = attn_score / math.sqrt(self.d_k)
@@ -89,14 +96,12 @@ class MultiHeadAttention(nn.Module):
             attn_score = attn_score.masked_fill(mask == 0, value=float("-Inf"))
 
         # 4. softmax
-        attn_score = attn_score.softmax(dim=3)  # shape: (batch_size, h, q_max_seq_length, k_max_seq_length)
+        attn_score = attn_score.softmax(
+            dim=3
+        )  # shape: (batch_size, h, q_max_seq_length, k_max_seq_length)
 
         # 5. dot product with V
         out = torch.matmul(attn_score, v)  # shape: (batch_size, h, max_seq_length, d_k)
 
-        out_dict = {"output": out,
-                    "attn_score": attn_score}
+        out_dict = {"output": out, "attn_score": attn_score}
         return out_dict
-
-
-

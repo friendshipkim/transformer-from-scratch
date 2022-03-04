@@ -24,7 +24,7 @@ class EncoderLayer(nn.Module):
         """
 
         # 1. attention
-        x_out_dict = self.attn(q=x, k=x, v=x, mask=enc_mask)  # TODO: encoder mask (future mask)
+        x_out_dict = self.attn(q=x, k=x, v=x, mask=enc_mask)
         x_out = x_out_dict["output"]
 
         x_out = self.norm1(x + x_out)

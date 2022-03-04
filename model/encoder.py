@@ -3,10 +3,13 @@ from model.layer.encoder_layer import EncoderLayer
 
 
 class Encoder(nn.Module):
-    def __init__(self, n_layers: int, d_model: int, h: int, ffn_hidden: int, p_drop: float):
+    def __init__(
+        self, n_layers: int, d_model: int, h: int, ffn_hidden: int, p_drop: float
+    ):
         super(Encoder, self).__init__()
-        self.layers = nn.ModuleList([EncoderLayer(d_model, h, ffn_hidden, p_drop)
-                                     for _ in range(n_layers)])
+        self.layers = nn.ModuleList(
+            [EncoderLayer(d_model, h, ffn_hidden, p_drop) for _ in range(n_layers)]
+        )
 
     def forward(self, x: Tensor, enc_mask: Tensor) -> Tensor:
         """

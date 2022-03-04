@@ -30,7 +30,9 @@ class TokenEmbedding(nn.Module):
         :param x: torch.Tensor, shape: (batch_size, max_seq_len)
         :return: torch.Tensor, shape: (batch_size, max_seq_len, d_model)
         """
-        out = self.embedding(x) * math.sqrt(self.d_model)  # multiply embedding weights by sqrt(d_model)
+        out = self.embedding(x) * math.sqrt(
+            self.d_model
+        )  # multiply embedding weights by sqrt(d_model)
         return out
 
 
@@ -38,10 +40,16 @@ class PositionalEncoding(nn.Module):
     def __init__(self, d_model: int, max_seq_len: int):
         super(PositionalEncoding, self).__init__()
         encoding = torch.zeros(max_seq_len, d_model)
-        position = torch.arange(0, max_seq_len)[..., None]  # [max_seq_len, 1], use [..., None] instead of .unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) * -(math.log(10000.0) / d_model))  # log space
+        position = torch.arange(0, max_seq_len)[
+            ..., None
+        ]  # [max_seq_len, 1], use [..., None] instead of .unsqueeze(1)
+        div_term = torch.exp(
+            torch.arange(0, d_model, 2) * -(math.log(10000.0) / d_model)
+        )  # log space
         # div_term = torch.reciprocal(torch.pow(10000, torch.arange(0, d_model, 2) / d_model))
-        encoding[:, 0::2] = torch.sin(position * div_term)  # position * div_term broadcasted to [max_seq_len, d_model/2]
+        encoding[:, 0::2] = torch.sin(
+            position * div_term
+        )  # position * div_term broadcasted to [max_seq_len, d_model/2]
         encoding[:, 1::2] = torch.cos(position * div_term)
 
         # my implementation
