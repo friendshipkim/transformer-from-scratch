@@ -16,9 +16,7 @@ class MultiHeadAttention(nn.Module):
         self.fc_concat = nn.Linear(d_model, d_model)
 
     def forward(
-        self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor
-    ) -> typing.Dict[str, Tensor]:
-        # TODO: mask_future necessary?
+        self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor) -> typing.Dict[str, Tensor]:
         """
         :param q: torch.Tensor, shape: (batch_size, q_max_seq_len, d_model)
         :param k: torch.Tensor, shape: (batch_size, k_max_seq_len, d_model)
@@ -86,13 +84,15 @@ class MultiHeadAttention(nn.Module):
         # 1. QK^T
         attn_score = torch.matmul(
             q, k.transpose(2, 3)
-        )  # shape: (batch_size, h, q_max_seq_length, k_max_seq_length)
+        )  # shape: (batch_size, h, q_max_seq_len, k_max_seq_len)
 
         # 2. scaling
         attn_score = attn_score / math.sqrt(self.d_k)
 
         # (3. masking)
         if mask is not None:
+            # given mask with shape (q_max_seq_len, k_max_seq_len),
+            # it is broadcasted to (batch_size, h, q_max_seq_len, k_max_seq_len)
             attn_score = attn_score.masked_fill(mask == 0, value=float("-Inf"))
 
         # 4. softmax
