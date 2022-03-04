@@ -16,7 +16,7 @@ def test_encoder_layer():
     mask = torch.randint(2, (batch_size, h, q_max_seq_len, k_max_seq_len))
 
     # encoder layer output
-    out = encoder_layer(x, mask)
+    out = encoder_layer(x, mask)  # TODO: check with enc_mask
 
     return out
 

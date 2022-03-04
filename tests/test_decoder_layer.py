@@ -12,12 +12,11 @@ def test_decoder_layer():
 
     # decoder_mask, cross_mask
     q_max_seq_len = k_max_seq_len = max_seq_len
-    dec_mask = torch.randint(
-        2, (batch_size, h, q_max_seq_len, k_max_seq_len)
-    )  # TODO: make dec_mask
+    dec_mask = torch.randint(2, (batch_size, h, q_max_seq_len, k_max_seq_len)
+    )  # TODO: check with dec_mask
     cross_mask = torch.randint(
         2, (batch_size, h, q_max_seq_len, k_max_seq_len)
-    )  # TODO: make cross_mask
+    )  # TODO: check with cross_mask
 
     # decoder layer
     decoder_layer = DecoderLayer(
