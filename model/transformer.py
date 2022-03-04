@@ -7,33 +7,40 @@ from model.decoder import Decoder
 
 
 class Transformer(nn.Module):
-    def __init__(self, n_layers, d_model, h, ffn_hidden, p_drop, d_embed, vocab):
+    def __init__(self, n_layers: int, d_model: int, h: int, ffn_hidden: int, p_drop: float, vocab_size: int, max_seq_len: int):
         super(Transformer, self).__init__()
         # encoder
-        self.enc_embedding = Embedding(d_embed, vocab)
-        self.encoder = Encoder(n_layers, d_model, h, ffn_hidden, p_drop)
+        self.enc_embedding = Embedding(d_model=d_model, vocab_size=vocab_size, max_seq_len=max_seq_len)
+        self.encoder = Encoder(n_layers=n_layers, d_model=d_model, h=h, ffn_hidden=ffn_hidden, p_drop=p_drop)
 
         # decoder
-        self.enc_embedding = Embedding(d_embed, vocab)
-        self.decoder = Decoder(n_layers, d_model, h, ffn_hidden, p_drop)
+        self.dec_embedding = self.enc_embedding
+        # TODO: how to make shared embedding
+        # self.dec_embedding = Embedding(d_model=d_model, vocab_size=vocab_size, max_seq_len=max_seq_len)
+        self.decoder = Decoder(n_layers=n_layers, d_model=d_model, h=h, ffn_hidden=ffn_hidden, p_drop=p_drop)
 
-        # linear classifier
-        self.classifier = nn.Linear(d_model, vocab.__len__()) # TODO: check
+        # final classifier
+        self.classifier = nn.Linear(d_model, vocab_size)
 
-    def forward(self, src, tgt):
-        # masks
-        src_mask = self.make_pad_mask(src, src)
-        cross_mask = self.make_pad_mask(tgt, src)
-        tgt_mask = self.make_pad_mask(tgt, tgt) * self.make_no_peak_mask(tgt, tgt)
+    def forward(self, enc_input, dec_input):
+        # masks TODO
+        enc_mask = self.make_pad_mask(enc_input, enc_input)
+        cross_mask = self.make_pad_mask(dec_input, enc_input)
+        dec_mask = self.make_pad_mask(dec_input, dec_input) * self.make_no_peak_mask(dec_input, dec_input)
 
-        enc_embedding = self.enc_embedding(src)
-        enc_out = self.encoder(enc_embedding, src_mask)  # context
+        # encoder
+        enc_embedding = self.enc_embedding(x=enc_input)
+        enc_output = self.encoder(x=enc_embedding, enc_mask=enc_mask)  # context
 
-        dec_embedding = self.dec_embedding(tgt)
-        dec_out = self.decoder(dec_embedding, enc_out, tgt_mask, cross_mask)
+        # decoder
+        dec_embedding = self.dec_embedding(x=dec_input)
+        dec_out = self.decoder(x=dec_embedding, enc_output=enc_output, dec_mask=dec_mask, cross_mask=cross_mask)
 
-        model_out = self.classifier(dec_out)  # final classification layer
+        # final classifier
+        model_out = self.classifier(dec_out)
         return model_out
+
+    # masking
 
     def make_pad_mask(self, q, k):
         len_q, len_k = q.size(1), k.size(1)

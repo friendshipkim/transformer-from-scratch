@@ -1,5 +1,6 @@
-import config # hyperparameters
+import config  # hyperparameters
 from model.transformer import Transformer
+
 import torchtext.datasets
 from torchtext.datasets import WikiText2
 from torchtext.data.utils import get_tokenizer
@@ -7,6 +8,8 @@ from torchtext.vocab import build_vocab_from_iterator
 from torch.utils.data import dataset
 import torch
 from torch import nn, Tensor
+
+
 
 if __name__ == '__main__':
     # use IWSLT dataset
@@ -18,17 +21,19 @@ if __name__ == '__main__':
     # padding or cut the sequence
     # build dataloader
 
+    # WikiText2
     train_iter = WikiText2(split='train')
     tokenizer = get_tokenizer('basic_english')
-    vocab = build_vocab_from_iterator(map(tokenizer, train_iter),
+    vocab = build_vocab_from_iterator(map(tokenizer, train_iter),  # TODO: what does it mean? map(tokenizer, train_iter)
                                       specials=['<unk>', '<bos>', '<eos>'])  # we can add <bos>, <eos>
-    vocab.set_default_index(vocab['<unk>'])
+    vocab.set_default_index(vocab['<unk>'])  # This index will be returned when OOV token is queried
 
 
     def data_process(raw_text_iter: dataset.IterableDataset) -> Tensor:
         """Converts raw text into a flat Tensor."""
         data = [torch.tensor(vocab(tokenizer(item)), dtype=torch.long) for item in raw_text_iter]
-        return torch.cat(tuple(filter(lambda t: t.numel() > 0, data)))
+        # vocab method maps tokens to indices.
+        return torch.cat(tuple(filter(lambda t: t.numel() > 0, data))) # TODO: why tuple?
 
 
     # train_iter was "consumed" by the process of building the vocab,
