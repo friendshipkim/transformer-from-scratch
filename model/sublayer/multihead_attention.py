@@ -16,7 +16,7 @@ class MultiHeadAttention(nn.Module):
         self.fc_concat = nn.Linear(d_model, d_model)
 
     def forward(
-        self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor) -> typing.Dict[str, Tensor]:
+            self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor = None) -> typing.Dict[str, Tensor]:
         """
         :param q: torch.Tensor, shape: (batch_size, q_max_seq_len, d_model)
         :param k: torch.Tensor, shape: (batch_size, k_max_seq_len, d_model)
@@ -68,7 +68,7 @@ class MultiHeadAttention(nn.Module):
         )
 
     def calculate_attn(
-        self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor
+            self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor = None
     ) -> typing.Dict[str, Tensor]:
         """
         calculate scaled dot product attention
@@ -91,9 +91,19 @@ class MultiHeadAttention(nn.Module):
 
         # (3. masking)
         if mask is not None:
+            print("do masking")
+            # mask = torch.zeros_like(mask, dtype=torch.float)  # all zeros
+            # mask.masked_fill_(mask, float("-inf"))
+            # mask.attn
+
             # given mask with shape (q_max_seq_len, k_max_seq_len),
             # it is broadcasted to (batch_size, h, q_max_seq_len, k_max_seq_len)
-            attn_score = attn_score.masked_fill(mask == 0, value=float("-Inf"))
+            print(attn_score.shape)
+            attn_score = attn_score.masked_fill(mask.unsqueeze(1) == 0, value=float("-inf"))
+            # print(attn_score)
+            # print(attn_score.shape)
+            # print(mask.shape)
+            # print(mask)
 
         # 4. softmax
         attn_score = attn_score.softmax(

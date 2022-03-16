@@ -10,6 +10,7 @@ class Encoder(nn.Module):
         self.layers = nn.ModuleList(
             [EncoderLayer(d_model, h, ffn_hidden, p_drop) for _ in range(n_layers)]
         )
+        self.norm = nn.LayerNorm(d_model)  # TODO: layernorm at last?
 
     def forward(self, x: Tensor, enc_mask: Tensor) -> Tensor:
         """
@@ -18,6 +19,7 @@ class Encoder(nn.Module):
 
         :return: torch.Tensor, shape: (batch_size, max_seq_len, d_model)
         """
-        for layer in self.layers:
+        for i, layer in enumerate(self.layers):
             x = layer(x, enc_mask)
+        x = self.norm(x)
         return x

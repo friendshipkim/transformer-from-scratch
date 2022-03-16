@@ -11,6 +11,7 @@ class Decoder(nn.Module):
         self.layers = nn.ModuleList(
             [DecoderLayer(d_model, h, ffn_hidden, p_drop) for _ in range(n_layers)]
         )
+        self.norm = nn.LayerNorm(d_model)  # TODO: layernorm at last?
 
     def forward(
         self, x: Tensor, enc_output: Tensor, dec_mask: Tensor, cross_mask: Tensor
@@ -25,4 +26,5 @@ class Decoder(nn.Module):
         """
         for layer in self.layers:
             x = layer(x, enc_output, dec_mask, cross_mask)
+        x = self.norm(x)
         return x
