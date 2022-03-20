@@ -4,6 +4,7 @@ import torch.nn as nn
 from torch.nn import Transformer
 import math
 
+
 # helper Module that adds positional encoding to the token embedding to introduce a notion of word order.
 class PositionalEncoding(nn.Module):
     def __init__(self,
@@ -11,7 +12,7 @@ class PositionalEncoding(nn.Module):
                  dropout: float,
                  maxlen: int = 5000):
         super(PositionalEncoding, self).__init__()
-        den = torch.exp(- torch.arange(0, emb_size, 2)* math.log(10000) / emb_size)
+        den = torch.exp(- torch.arange(0, emb_size, 2) * math.log(10000) / emb_size)
         pos = torch.arange(0, maxlen).reshape(maxlen, 1)
         pos_embedding = torch.zeros((maxlen, emb_size))
         pos_embedding[:, 0::2] = torch.sin(pos * den)
@@ -76,12 +77,7 @@ class BaselineTransformer(nn.Module):
 
     def forward(self,
                 src: Tensor,
-                trg: Tensor,):
-                # src_mask: Tensor,
-                # tgt_mask: Tensor,
-                # src_padding_mask: Tensor,
-                # tgt_padding_mask: Tensor,
-                # memory_key_padding_mask: Tensor):
+                trg: Tensor, ):
         # masking
         src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = self.create_mask(src, trg)
         # print("src_mask shape:", src_mask.shape)
@@ -92,12 +88,12 @@ class BaselineTransformer(nn.Module):
         src_emb = self.positional_encoding(self.src_tok_emb(src))
         tgt_emb = self.positional_encoding(self.tgt_tok_emb(trg))
         memory, outs = self.transformer(src_emb, tgt_emb,
-                                src_mask=src_mask,  # additive mask for the src sequence, shape: (S, S)
-                                tgt_mask=tgt_mask,  # additive mask for the tgt sequence, shape: (T, T)
-                                memory_mask=None,  # additive mask for the encoder output, shape: (T, S)
-                                src_key_padding_mask=src_padding_mask,  # mask for src keys per batch, shape: (N, S)
-                                tgt_key_padding_mask=tgt_padding_mask,  # mask for tgt keys per batch, shape: (N, T)
-                                memory_key_padding_mask=src_padding_mask)  # mask for memory keys per batch, shape: (N, S)
+                                        src_mask=src_mask,  # additive mask for the src sequence, shape: (S, S)
+                                        tgt_mask=tgt_mask,  # additive mask for the tgt sequence, shape: (T, T)
+                                        memory_mask=None,  # additive mask for the encoder output, shape: (T, S)
+                                        src_key_padding_mask=src_padding_mask,  # mask for src keys per batch, shape: (N, S)
+                                        tgt_key_padding_mask=tgt_padding_mask,  # mask for tgt keys per batch, shape: (N, T)
+                                        memory_key_padding_mask=src_padding_mask)  # mask for memory keys per batch, shape: (N, S)
         return src_emb, tgt_emb, memory, outs, self.generator(outs)
 
     def encode(self, src: Tensor, src_mask: Tensor):
