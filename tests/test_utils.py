@@ -1,7 +1,6 @@
 import torch
-import typing
 import os
-import config as cfg
+import numpy as np
 from layer_mapping import *
 
 from torch import Tensor, LongTensor
@@ -104,6 +103,14 @@ def same_size(x: Tensor, y: Tensor) -> bool:
     """
     return x.shape == y.shape
 
+def count_params(model):
+    """
+    count model parameters
+    """
+    model_parameters = filter(lambda p: p.requires_grad, model.parameters())
+    param_count = sum([np.prod(p.size()) for p in model_parameters])
+    return param_count
+
 
 # model weights copy methods
 def copy_te_dict(src, tgt):
@@ -167,14 +174,14 @@ def copy_transformer_layer_dict(src, tgt, model_type):
     return tgt
 
 
-def copy_encoder_decoder_dict(src, tgt, model_type):
+def copy_encoder_decoder_dict(src, tgt, n_layers, model_type):
     # src = baseline
     # tgt = mine
     # type - "encoder" or "decoder"
 
     copy_count = 0
 
-    for layer in range(cfg.n_layers):
+    for layer in range(n_layers):
         # prefix
         src_prefix = f"layers.{layer}"
         tgt_prefix = f"layers.{layer}"
@@ -221,4 +228,73 @@ def copy_encoder_decoder_dict(src, tgt, model_type):
 
     assert len(tgt) == copy_count, f"{model_type} is not copied correctly"
     print(f"{model_type} copied: baseline -> my")
+    return tgt
+
+
+def copy_transformer_dict(src, tgt, n_layers):
+    # src = baseline
+    # tgt = mine
+    copy_count = 0
+
+    # copy embedding, classifier
+    mappings = [embedding_mapping, classifier_mapping]
+    for mapping in mappings:
+        for src_layer_name, tgt_layer_name in mapping.items():
+            if same_size(src[src_layer_name], tgt[tgt_layer_name]):
+                tgt[tgt_layer_name] = src[src_layer_name]
+                copy_count += 1
+            else:
+                assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
+    print("embedding and classifier copied")
+
+    # check for transformer blocks
+    for enc_dec in ["encoder", "decoder"]:
+        # for every layer
+        for layer in range(n_layers):
+            # prefix
+            src_prefix = f"transformer.{enc_dec}.layers.{layer}"
+            tgt_prefix = f"{enc_dec}.layers.{layer}"
+
+            # postfix dict
+            postfix_mapping = eval(enc_dec + "_postfix_mapping")
+
+            for src_postfix, tgt_postfix in postfix_mapping.items():
+                if type(tgt_postfix) == list:  # a baseline layer maps to multiple my layers
+                    src_layer_name = ".".join([src_prefix, src_postfix])
+                    tgt_layer_names = [".".join([tgt_prefix, p]) for p in tgt_postfix]
+
+                    src_concat_weight = src[src_layer_name]  # shape: (d_model * 3, d_model) for weights
+                    src_weights = torch.split(src_concat_weight, src_concat_weight.size(0) // 3, dim=0)
+
+                    for src_weight, tgt_layer_name in zip(src_weights, tgt_layer_names):
+                        if same_size(tgt[tgt_layer_name], src_weight):
+                            tgt[tgt_layer_name] = src_weight
+                            copy_count += 1
+                        else:
+                            assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
+                else:
+                    src_layer_name = ".".join([src_prefix, src_postfix])
+                    tgt_layer_name = ".".join([tgt_prefix, tgt_postfix])
+
+                    if same_size(src[src_layer_name], tgt[tgt_layer_name]):
+                        tgt[tgt_layer_name] = src[src_layer_name]
+                        copy_count += 1
+                    else:
+                        assert False, "%d - %d tensor shape not matched" % (src_layer_name, tgt_layer_name)
+
+        print(f"{enc_dec} transformer layers copied")
+
+        # check layernorm at the last
+        for weight_bias in ["weight", "bias"]:
+            src_layer_name = f"transformer.{enc_dec}.norm.{weight_bias}"
+            tgt_layer_name = f"{enc_dec}.norm.{weight_bias}"
+
+            if same_size(src[src_layer_name], tgt[tgt_layer_name]):
+                tgt[tgt_layer_name] = src[src_layer_name]
+                copy_count += 1
+            else:
+                assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
+
+    assert len(tgt) == copy_count, "Transformer is not copied correctly"
+    print("Transformer copied: baseline -> my")
     return tgt
