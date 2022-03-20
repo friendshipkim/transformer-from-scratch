@@ -1,4 +1,4 @@
-# TODO: Not necessary
+# TODO: Deprecated
 
 from torch import nn, Tensor
 

@@ -10,6 +10,8 @@ from model.sublayer.pointwise_feedforward import PointwiseFeedForward
 class EncoderLayer(nn.Module):
     def __init__(self, d_model: int, h: int, ffn_hidden: int, p_drop: float):
         super(EncoderLayer, self).__init__()
+        self.h = h
+
         self.self_attn = MultiHeadAttention(d_model, h)
         self.norm1 = nn.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(p_drop)
@@ -18,26 +20,23 @@ class EncoderLayer(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout2 = nn.Dropout(p_drop)
 
-        self.attn_out_weights = None
-
-    def forward(self, x: Tensor, enc_mask: Tensor = None) -> Tensor:
+    def forward(self, x: Tensor, src_pad_mask: Tensor = None) -> Tensor:
         """
-        :param x: torch.Tensor, shape: (batch_size, max_seq_len, d_model)
-        :param enc_mask: torch.Tensor, shape (batch_size, h, q_max_seq_len, k_max_seq_len)
-        :return: torch.Tensor, shape (batch_size, max_seq_len, d_model)
+        :param x: torch.Tensor, shape: (batch_size, src_seq_len, d_model)
+        :param src_pad_mask: torch.Tensor, shape (batch_size, src_seq_len)
+        :return: torch.Tensor, shape (batch_size, src_seq_len, d_model)
         """
 
         # 1. attention
-        attn_out_dict = self.self_attn(q=x, k=x, v=x, mask=enc_mask)
-        attn_out = attn_out_dict["output"]
-        attn_out_weights = attn_out_dict["attn_score"]
+        attn_out, attn_score = self.self_attn(q=x, k=x, v=x,
+                                              mask=None if src_pad_mask == None
+                                                        else self.create_enc_mask(pad_mask=src_pad_mask))
         out = self.dropout1(attn_out)
         out = self.norm1(x + out)
 
-        self.attn_out_weights = attn_out_weights
-
-        # torch.save(x, f'/home/wk247/workspace/transformer-from-scratch/tensors/my.encoder.{i}.selfattn.norm.pt')
-        # print(f'saving mine - {i}th layer after selfattn')
+        # tmp: saving attention outputs
+        self.attn_score = attn_score
+        self.attn_out = attn_out
 
         # 2. feed forward
         cp_out = out
@@ -45,7 +44,17 @@ class EncoderLayer(nn.Module):
         out = self.dropout2(out)
         out = self.norm2(out + cp_out)
 
-        # torch.save(x, f'/home/wk247/workspace/transformer-from-scratch/tensors/my.encoder.{i}.ffn.norm.pt')
-        # print(f'saving mine - {i}th layer after ffn')
-
         return out
+
+    def create_enc_mask(self, pad_mask: Tensor):
+        # TODO maybe put this into multihead
+        """
+        transform source padding mask into proper shape
+
+        :param pad_mask: torch.Tensor, shape: (batch_size, src_seq_len)
+        :return: enc_mask: torch.Tensor, shape: (batch_size * h, src_seq_len, src_seq_len)
+        """
+        batch_size, src_seq_len = pad_mask.size()
+        enc_mask = pad_mask.view(batch_size, 1, 1, src_seq_len). \
+            expand(-1, self.h, src_seq_len, -1).reshape(batch_size * self.h, src_seq_len, src_seq_len)
+        return enc_mask
