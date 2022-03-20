@@ -8,17 +8,14 @@ my: model.layer.DecoderLayer
 
 import copy
 
-import torch
-
 from model.sublayer.positional_encoding import PositionalEncoding as my_PE
 from model.sublayer.token_embedding import TokenEmbedding as my_TE
-from model.baseline_transformer import PositionalEncoding as baseline_PE
-from model.baseline_transformer import TokenEmbedding as baseline_TE
+from baseline_model.baseline_transformer import PositionalEncoding as baseline_PE
+from baseline_model.baseline_transformer import TokenEmbedding as baseline_TE
 
 from torch.nn import TransformerDecoderLayer as BaselineDecLayer
 from model.layer.decoder_layer import DecoderLayer as MyDecLayer
 
-import config as cfg
 from test_utils import *
 
 # global variables

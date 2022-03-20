@@ -2,14 +2,11 @@ import copy
 
 import torch
 from model.transformer import Transformer
-from model.baseline_transformer import BaselineTransformer
+from baseline_model.baseline_transformer import BaselineTransformer
 import config as cfg
 import numpy as np
 
 from layer_mapping import *
-
-
-# import fairseq
 
 
 def count_params(model):
@@ -230,7 +227,7 @@ def test_transformer():
     #     print(k, "shape:", v.shape)
 
     # 4. test masking
-    # tests/test_mask_baseline.py
+    # tests/test_mask_deprecated.py
 
     # 5. copy state dict
     print("\n4. copy model parameters baseline -> mine")

@@ -10,15 +10,14 @@ import copy
 
 from model.sublayer.positional_encoding import PositionalEncoding as my_PE
 from model.sublayer.token_embedding import TokenEmbedding as my_TE
-from model.baseline_transformer import PositionalEncoding as baseline_PE
-from model.baseline_transformer import TokenEmbedding as baseline_TE
+from baseline_model.baseline_transformer import PositionalEncoding as baseline_PE
+from baseline_model.baseline_transformer import TokenEmbedding as baseline_TE
 
 from torch.nn import LayerNorm
 from torch.nn import TransformerEncoderLayer as BaselineEncLayer
 from torch.nn import TransformerEncoder as BaselineEncoder
 from model.encoder import Encoder as MyEncoder
 
-import config as cfg
 from test_utils import *
 
 # global variables
