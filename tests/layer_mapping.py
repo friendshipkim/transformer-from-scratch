@@ -52,9 +52,12 @@ decoder_postfix_mapping = {"self_attn.in_proj_weight":
                            "norm3.bias": "norm3.bias",
                            }
 
-classifier_mapping = {'generator.weight': 'classifier.weight',
-                      'generator.bias': 'classifier.bias'}
+layernorm_mapping = {"norm.weight": "norm.weight",
+                     "norm.bias": "norm.bias"}
 
-embedding_mapping = {'src_tok_emb.embedding.weight': 'src_tok_emb.embedding.weight',
-                     'tgt_tok_emb.embedding.weight': 'tgt_tok_emb.embedding.weight',
-                     'positional_encoding.pos_embedding': "positional_encoding.encoding"}
+classifier_mapping = {"generator.weight": "classifier.weight",
+                      "generator.bias": "classifier.bias"}
+
+embedding_mapping = {"src_tok_emb.embedding.weight": "src_tok_emb.embedding.weight",
+                     "tgt_tok_emb.embedding.weight": "tgt_tok_emb.embedding.weight",
+                     "positional_encoding.pos_embedding": "positional_encoding.encoding"}
