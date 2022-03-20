@@ -298,3 +298,146 @@ def copy_transformer_dict(src, tgt, n_layers):
     assert len(tgt) == copy_count, "Transformer is not copied correctly"
     print("Transformer copied: baseline -> my")
     return tgt
+
+
+def check_transformer_grads(src, tgt, atol=1e-7):
+    # src = baseline
+    # tgt = mine
+
+    # make target parameter dict
+    tgt_grads_dict = {}
+    for tgt_layer_name, tgt_param in tgt.named_parameters():
+        tgt_grads_dict[tgt_layer_name] = tgt_param.grad
+
+    for src_layer_name, src_param in src.named_parameters():
+        # gradient tensor
+        src_grad = src_param.grad
+        src_name_split = src_layer_name.split(".")
+
+        # check layer type
+        is_transformer = src_name_split[0] == "transformer"
+        is_generator = src_name_split[0] == "generator"
+
+        if is_transformer:  # transformer layer
+            enc_dec = src_name_split[1]
+            is_layer = src_name_split[2] == "layers"
+            is_norm = src_name_split[2] == "norm"
+
+            postfix_mapping = eval(enc_dec + "_postfix_mapping")
+
+            if is_layer:
+                layer_num = src_name_split[3]
+                src_postfix = ".".join(src_name_split[4:])
+                tgt_prefix = f"{enc_dec}.layers.{layer_num}"
+                tgt_postfix = postfix_mapping[src_postfix]
+
+                if type(tgt_postfix) == list:  # a baseline layer maps to multiple my layers
+
+                    tgt_layer_names = [".".join([tgt_prefix, p]) for p in tgt_postfix]
+
+                    src_grad_list = torch.split(src_grad, src_grad.size(0) // 3, dim=0)
+
+                    for src_grad_split, tgt_layer_name in zip(src_grad_list, tgt_layer_names):
+                        tgt_grad = tgt_grads_dict.pop(tgt_layer_name)
+                        if not torch.isclose(src_grad_split, tgt_grad).all():
+                            print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
+                            unmatch_indices = (torch.isclose(src_grad_split, tgt_grad) == False).nonzero(as_tuple=True)
+                            src_unmatch = src_grad_split[unmatch_indices]
+                            tgt_unmatch = tgt_grad[unmatch_indices]
+
+                            print("unmatched count:", len(src_unmatch))
+                            print(f"compare with low precision ({atol}):",
+                                  torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
+                            print()
+                        else:
+                            # print(f"{src_layer_name} - {tgt_layer_name} match")
+                            pass
+
+                else:
+                    tgt_layer_name = ".".join([tgt_prefix, tgt_postfix])
+                    tgt_grad = tgt_grads_dict.pop(tgt_layer_name)
+
+                    if not torch.isclose(src_grad, tgt_grad).all():
+                        print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
+                        unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
+                        src_unmatch = src_grad[unmatch_indices]
+                        tgt_unmatch = tgt_grad[unmatch_indices]
+
+                        print("unmatched count:", len(src_unmatch))
+                        print(f"compare with low precision ({atol}):",
+                              torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
+                        print()
+                    else:
+                        # print(f"{src_layer_name} - {tgt_layer_name} match")
+                        pass
+                    # or just use
+                    # assert torch.isclose(src_grad, tgt_grad).all(), f"{src_layer_name} - {tgt_layer_name} doesn't match"
+
+            elif is_norm:  # layernorm after transformer layer
+                postfix_mapping = layernorm_mapping
+                src_postfix = ".".join(src_name_split[2:])
+                tgt_prefix = f"{enc_dec}"
+                tgt_postfix = postfix_mapping[src_postfix]
+
+                tgt_layer_name = ".".join([tgt_prefix, tgt_postfix])
+                tgt_grad = tgt_grads_dict.pop(tgt_layer_name)
+
+                if not torch.isclose(src_grad, tgt_grad).all():
+                    print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
+                    unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
+                    src_unmatch = src_grad[unmatch_indices]
+                    tgt_unmatch = tgt_grad[unmatch_indices]
+
+                    print("unmatched count:", len(src_unmatch))
+                    print(f"compare with low precision ({atol}):",
+                          torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
+                    print()
+                else:
+                    # print(f"{src_layer_name} - {tgt_layer_name} match")
+                    pass
+            else:
+                assert False, f"invalid layer type - {src_layer_name}"
+
+        elif is_generator:
+            postfix_mapping = classifier_mapping
+            tgt_layer_name = postfix_mapping[src_layer_name]
+
+            tgt_grad = tgt_grads_dict.pop(tgt_layer_name)
+
+            if not torch.isclose(src_grad, tgt_grad).all():
+                print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
+                unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
+                src_unmatch = src_grad[unmatch_indices]
+                tgt_unmatch = tgt_grad[unmatch_indices]
+
+                print("unmatched count:", len(src_unmatch))
+                print(f"compare with low precision ({atol}):",
+                      torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
+                print()
+            else:
+                # print(f"{src_layer_name} - {tgt_layer_name} match")
+                pass
+
+        else:  # embedding
+            postfix_mapping = embedding_mapping
+            tgt_layer_name = postfix_mapping[src_layer_name]
+
+            tgt_grad = tgt_grads_dict.pop(tgt_layer_name)
+
+            if not torch.isclose(src_grad, tgt_grad).all():
+                print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
+                unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
+                src_unmatch = src_grad[unmatch_indices]
+                tgt_unmatch = tgt_grad[unmatch_indices]
+
+                print("unmatched count:", len(src_unmatch))
+                print(f"compare with low precision ({atol}):",
+                      torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
+                print()
+            else:
+                # print(f"{src_layer_name} - {tgt_layer_name} match")
+                pass
+    assert len(tgt_grads_dict) == 0, "unchecked parameter left in target dictionary"
+    print("Gradients checked!")
+    return
+
