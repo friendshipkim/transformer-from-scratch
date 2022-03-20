@@ -78,6 +78,7 @@ class DecoderLayer(nn.Module):
 
         :param tgt_pad_mask: torch.Tensor, shape: (batch_size, tgt_seq_len)
         :param tgt_autoregressive_mask: shape: (tgt_seq_len, tgt_seq_len)
+        :param memory_pad_mask: shape: (batch_size, src_seq_len)
 
         :return: tgt_mask: torch.Tensor, shape: (batch_size * h, tgt_seq_len, tgt_seq_len)
         :return: cross_mask: torch.Tensor, shape: (batch_size * h, tgt_seq_len, src_seq_len)

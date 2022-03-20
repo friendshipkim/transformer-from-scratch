@@ -55,7 +55,7 @@ class Transformer(nn.Module):
         # final classifier
         self.classifier = nn.Linear(d_model, tgt_vocab_size)
 
-    def forward(self, src: Tensor, tgt: Tensor) -> typing.Tuple[Tensor * 5]:
+    def forward(self, src: Tensor, tgt: Tensor) -> typing.Tuple:
         """
         :param src: torch.Tensor, shape: (batch_size, src_seq_len)
         :param tgt: torch.Tensor, shape: (batch_size, tgt_seq_len)
@@ -76,7 +76,8 @@ class Transformer(nn.Module):
             x=dec_embedding,
             enc_output=enc_output,
             tgt_pad_mask=tgt_pad_mask,
-            tgt_autoregressive_mask=tgt_autoregressive_mask
+            tgt_autoregressive_mask=tgt_autoregressive_mask,
+            memory_pad_mask=src_pad_mask
         )
 
         # final classifier
