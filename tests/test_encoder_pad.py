@@ -20,6 +20,8 @@ from model.encoder import Encoder as MyEncoder
 
 from test_utils import *
 
+import config as cfg
+
 # global variables
 load_input_flag = False  # True if to load stored input tensor
 save_input_flag = False  # True if to save generated random input tensor
@@ -118,22 +120,29 @@ def test_encoder_pad():
     # 2. encoder
     copy_my_enc_sd = copy_encoder_decoder_dict(src=baseline_encoder.state_dict(),
                                                tgt=copy.deepcopy(my_encoder.state_dict()),
+                                               n_layers=cfg.n_layers,
                                                model_type="encoder")
     my_encoder.load_state_dict(copy_my_enc_sd)
-
 
     # feed an input
     print("=" * 30, "feed an input with padding", "=" * 30)
     if load_input_flag:  # load saved input
         input_pad = load_input_pad(input_file_path).to(cfg.device)
     else:
-        input_pad = generate_input_pad(seed).to(cfg.device)  # generate rand input
+        input_pad = generate_input_pad(seed=seed,
+                                       pad_idx=cfg.pad_idx,
+                                       vocab_size=cfg.src_vocab_size,
+                                       seq_len=cfg.src_seq_len,
+                                       batch_size=cfg.batch_size,
+                                       save_flag=save_input_flag,
+                                       file_path=input_file_path).to(cfg.device)  # generate rand input
 
     # create masks
     # baseline_src_mask shape: (src_seq_len, src_seq_len)
     # baseline_src_padding_mask shape: (batch_size, src_seq_len)
     # my_src_padding_mask shape: (batch_size, 1, src_seq_len)
-    baseline_src_mask, baseline_src_padding_mask = create_baseline_src_masks(src=input_pad, device=cfg.device, pad_idx=cfg.pad_idx)
+    baseline_src_mask, baseline_src_padding_mask = create_baseline_src_masks(src=input_pad, device=cfg.device,
+                                                                             pad_idx=cfg.pad_idx)
     my_src_padding_mask = create_my_src_masks(x=input_pad, pad_idx=cfg.pad_idx)
 
     # embedding output, shape: (batch_size,src_seq_len, d_model)
