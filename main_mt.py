@@ -1,3 +1,6 @@
+"""
+TODO: check why loss trends are different
+"""
 from torchtext.data.utils import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator
 from torchtext.datasets import Multi30k
@@ -6,10 +9,12 @@ from typing import Iterable, List
 import torch
 import torch.nn as nn
 from tqdm import tqdm
+import copy
 
 from model.transformer import Transformer
 from baseline_model.baseline_transformer import BaselineTransformer
 import config as cfg
+from tests.test_utils import *
 
 SRC_LANGUAGE = 'de'
 TGT_LANGUAGE = 'en'
@@ -62,7 +67,7 @@ def main_mt():
     TGT_VOCAB_SIZE = len(vocab_transform[TGT_LANGUAGE])
 
     # torch tutorial model
-    transformer = BaselineTransformer(num_encoder_layers=cfg.n_layers,
+    b_transformer = BaselineTransformer(num_encoder_layers=cfg.n_layers,
                                       num_decoder_layers=cfg.n_layers,
                                       emb_size=cfg.d_model,
                                       nhead=cfg.h,
@@ -72,20 +77,26 @@ def main_mt():
                                       dropout=cfg.p_drop,
                                       pad_idx=PAD_IDX,
                                       device=cfg.device)
+    b_transformer.to(cfg.device)
+
+    # my model
+    transformer = Transformer(n_layers=cfg.n_layers,
+                                 d_model=cfg.d_model,
+                                 h=cfg.h,
+                                 ffn_hidden=cfg.ffn_hidden,
+                                 p_drop=cfg.p_drop,
+                                 src_vocab_size=SRC_VOCAB_SIZE,
+                                 tgt_vocab_size=TGT_VOCAB_SIZE,
+                                 pad_idx=PAD_IDX,
+                                 device=cfg.device)
+
     transformer.to(cfg.device)
 
-    # # my model
-    # my_transformer = Transformer(n_layers=cfg.n_layers,
-    #                              d_model=cfg.d_model,
-    #                              h=cfg.h,
-    #                              ffn_hidden=cfg.ffn_hidden,
-    #                              p_drop=cfg.p_drop,
-    #                              src_vocab_size=SRC_VOCAB_SIZE,
-    #                              tgt_vocab_size=TGT_VOCAB_SIZE,
-    #                              pad_idx=PAD_IDX,
-    #                              device=cfg.device)
-    #
-    # my_transformer.to(cfg.device)
+    # copy transformer weights
+    copied_my_sd = copy_transformer_dict(src=b_transformer.state_dict(),
+                                         tgt=copy.deepcopy(transformer.state_dict()),
+                                         n_layers=cfg.n_layers)
+    transformer.load_state_dict(copied_my_sd)
 
     for p in transformer.parameters():
         if p.dim() > 1:
@@ -191,7 +202,7 @@ def main_mt():
     Let's train!
     """
     from timeit import default_timer as timer
-    NUM_EPOCHS = 18
+    NUM_EPOCHS = 15
 
     for epoch in range(1, NUM_EPOCHS + 1):
         start_time = timer()
