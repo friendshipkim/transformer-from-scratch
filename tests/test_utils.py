@@ -346,6 +346,7 @@ def check_transformer_grads(src, tgt, atol=1e-7):
                             tgt_unmatch = tgt_grad[unmatch_indices]
 
                             print("unmatched count:", len(src_unmatch))
+                            print("unmatched values:", src_unmatch)
                             print(f"compare with low precision ({atol}):",
                                   torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
                             print()
@@ -364,6 +365,7 @@ def check_transformer_grads(src, tgt, atol=1e-7):
                         tgt_unmatch = tgt_grad[unmatch_indices]
 
                         print("unmatched count:", len(src_unmatch))
+                        print("unmatched values:", src_unmatch)
                         print(f"compare with low precision ({atol}):",
                               torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
                         print()
@@ -389,6 +391,7 @@ def check_transformer_grads(src, tgt, atol=1e-7):
                     tgt_unmatch = tgt_grad[unmatch_indices]
 
                     print("unmatched count:", len(src_unmatch))
+                    print("unmatched values:", src_unmatch)
                     print(f"compare with low precision ({atol}):",
                           torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
                     print()
@@ -411,6 +414,7 @@ def check_transformer_grads(src, tgt, atol=1e-7):
                 tgt_unmatch = tgt_grad[unmatch_indices]
 
                 print("unmatched count:", len(src_unmatch))
+                print("unmatched values:", src_unmatch)
                 print(f"compare with low precision ({atol}):",
                       torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
                 print()
@@ -431,6 +435,7 @@ def check_transformer_grads(src, tgt, atol=1e-7):
                 tgt_unmatch = tgt_grad[unmatch_indices]
 
                 print("unmatched count:", len(src_unmatch))
+                print("unmatched values:", src_unmatch)
                 print(f"compare with low precision ({atol}):",
                       torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
                 print()
