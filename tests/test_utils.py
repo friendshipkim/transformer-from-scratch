@@ -1,7 +1,7 @@
 import torch
 import os
 import numpy as np
-from layer_mapping import *
+from .layer_mapping import *
 
 from torch import Tensor, LongTensor
 
