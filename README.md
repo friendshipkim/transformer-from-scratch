@@ -49,7 +49,7 @@ Replication Project: Transformer model built from scratch.
 ```
 ## Setup
 ```angular2html
-pip install requirements.txt]()
+pip install requirements.txt
 pip install -e .
 ```
 
@@ -72,8 +72,10 @@ Before training, let's check if the baseline and my implementation have the same
 ```angular2html
 python ./tests/test_trainsformer.py
 ```
-## Loss trends
-* baseline
+## Training 
+* Task - Machine Translation
+* Dataset - Multi30k
+* Baseline model training logs
 ```
     Epoch: 1, Train loss: 4.487, Val loss: 3.824, Epoch time = 60.442s
     Epoch: 2, Train loss: 3.629, Val loss: 3.481, Epoch time = 57.315s
@@ -92,7 +94,7 @@ python ./tests/test_trainsformer.py
     Epoch: 15, Train loss: 1.208, Val loss: 2.052, Epoch time = 52.755s
 ```
 
-* my model
+* My model training logs
 ```
     Epoch: 1, Train loss: 4.870, Val loss: 4.093, Epoch time = 56.626s
     Epoch: 2, Train loss: 3.876, Val loss: 3.730, Epoch time = 56.522s
