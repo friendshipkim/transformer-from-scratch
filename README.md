@@ -2,13 +2,58 @@
 
 Replication Project: Transformer model built from scratch.
 
-# Setup
+## Transformer architecte
+### model architecture
+![image1](./assets/architecture.png)
+### attention architecture
+![image1](./assets/attention.png)
+```python
+    def calculate_attn(
+            self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor = None
+    ) -> typing.Tuple[Tensor, Tensor]:
+        """
+        calculate scaled dot product attention
+
+        :param q: torch.Tensor, shape: (batch_size, h, q_len, d_k)
+        :param k: torch.Tensor, shape: (batch_size, h, k_len, d_k)
+        :param v: torch.Tensor, shape: (batch_size, h, k_len, d_k)
+        :param mask: torch.Tensor, shape: (batch_size, h, q_len, k_len)
+
+        :return attn_out: torch.Tensor, shape: (batch_size, h, max_seq_len, d_k)
+        :return attn_score: torch.Tensor, shape: (batch_size, h, max_seq_len, d_k)
+        """
+
+        # if mask != None: print("mask", mask.shape) # now (batch_size, seq_len)
+
+        # 1. scaling
+        q = q / math.sqrt(self.d_k)
+
+        # 2. QK^T
+        attn_score = torch.bmm(q, k.transpose(-2, -1))  # shape: (batch_size * h, q_len, k_len)
+        # (3. masking)
+        if mask is not None:
+            attn_score = attn_score.masked_fill(mask == 0, value=float("-inf"))
+
+        # 4. softmax
+        attn_score = F.softmax(attn_score, dim=-1)  # shape: (batch_size * h, q_len, k_len)
+
+        # (dropout)
+        # This is actually dropping out entire tokens to attend to, which might
+        # seem a bit unusual, but is taken from the original Transformer paper.
+        attn_score = self.dropout(attn_score)
+
+        # 5. dot product with V
+        attn_out = torch.bmm(attn_score, v)  # shape: (batch_size * h, q_len, d_k)
+
+        return attn_out, attn_score
+```
+## Setup
 ```angular2html
-pip install requirements.txt
+pip install requirements.txt]()
 pip install -e .
 ```
 
-# Checklist
+## Checklist
 - [x] Check the number of parameters
 - [x] Check if output tensors are the same size
 - [x] Check self/cross attention masks
@@ -22,7 +67,7 @@ pip install -e .
         - [x] With padding
 - [x] * Call loss.backward() once and check if the gradients are the same for all parameters
 
-# Loss trends
+## Loss trends
 * baseline
 ```
     Epoch: 1, Train loss: 4.487, Val loss: 3.824, Epoch time = 60.442s
