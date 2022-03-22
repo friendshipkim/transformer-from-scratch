@@ -65,7 +65,7 @@ pip install -e .
         - [x] Without padding
            - [x] FIXED - Precision issue - true when the absolute tolerance is 1e-6, but false when 1e-8
         - [x] With padding
-- [x] * Call loss.backward() once and check if the gradients are the same for all parameters
+- [x] Call loss.backward() once and check if the gradients are the same for all parameters
 
 ## Loss trends
 * baseline
