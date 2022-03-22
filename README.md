@@ -2,7 +2,7 @@
 
 Replication Project: Transformer model built from scratch.
 
-## Transformer architecte
+## Transformer architecture
 ### model architecture
 ![image1](./assets/architecture.png)
 ### attention architecture
