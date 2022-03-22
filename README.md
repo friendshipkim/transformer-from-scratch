@@ -54,6 +54,7 @@ pip install -e .
 ```
 
 ## Checklist
+Before training, let's check if the baseline and my implementation have the same forward and backward pass.
 - [x] Check the number of parameters
 - [x] Check if output tensors are the same size
 - [x] Check self/cross attention masks
@@ -63,10 +64,14 @@ pip install -e .
 - [x] Copy the weights and
     - [x] feed an input and check if the output is the same
         - [x] Without padding
-           - [x] FIXED - Precision issue - true when the absolute tolerance is 1e-6, but false when 1e-8
+           - [x] Precision issue - FIXED: change scaled dot product attention
         - [x] With padding
 - [x] Call loss.backward() once and check if the gradients are the same for all parameters
 
+* how to test
+```angular2html
+python ./tests/test_trainsformer.py
+```
 ## Loss trends
 * baseline
 ```
