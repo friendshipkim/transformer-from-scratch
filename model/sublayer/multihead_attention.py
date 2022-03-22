@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_model: int, h: int):
+    def __init__(self, d_model: int, h: int, p_drop: float):
         super(MultiHeadAttention, self).__init__()
         # shape vars
         self.d_model = d_model
@@ -18,6 +18,8 @@ class MultiHeadAttention(nn.Module):
         self.fc_k = nn.Linear(d_model, d_model)
         self.fc_v = nn.Linear(d_model, d_model)
         self.fc_concat = nn.Linear(d_model, d_model)
+
+        self.dropout = nn.Dropout(p_drop)
 
     def forward(
             self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor = None) -> typing.Tuple[Tensor, Tensor]:
@@ -119,9 +121,14 @@ class MultiHeadAttention(nn.Module):
         # (3. masking)
         if mask is not None:
             attn_score = attn_score.masked_fill(mask == 0, value=float("-inf"))
-            pass
+
         # 4. softmax
         attn_score = F.softmax(attn_score, dim=-1)  # shape: (batch_size * h, q_len, k_len)
+
+        # (dropout)
+        # This is actually dropping out entire tokens to attend to, which might
+        # seem a bit unusual, but is taken from the original Transformer paper.
+        attn_score = self.dropout(attn_score)
 
         # 5. dot product with V
         attn_out = torch.bmm(attn_score, v)  # shape: (batch_size * h, q_len, d_k)

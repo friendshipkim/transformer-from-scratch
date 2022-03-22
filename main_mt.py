@@ -144,6 +144,7 @@ def main_mt():
         tgt_batch = pad_sequence(tgt_batch, padding_value=PAD_IDX)
         return src_batch, tgt_batch
 
+    breakpoint()
     """
     training & evaluation
     """
@@ -212,7 +213,7 @@ def main_mt():
         print(
             f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Val loss: {val_loss:.3f}, "f"Epoch time = {(end_time - start_time):.3f}s")
 
-    # # function to generate output sequence using greedy algorithm
+    # function to generate output sequence using greedy algorithm
     # def greedy_decode(model, src, src_mask, max_len, start_symbol):
     #     src = src.to(cfg.device)
     #     src_mask = src_mask.to(cfg.device)

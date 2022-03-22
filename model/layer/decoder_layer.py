@@ -10,11 +10,11 @@ class DecoderLayer(nn.Module):
         super(DecoderLayer, self).__init__()
         self.h = h
 
-        self.self_attn = MultiHeadAttention(d_model, h)
+        self.self_attn = MultiHeadAttention(d_model, h, p_drop)
         self.dropout1 = nn.Dropout(p_drop)
         self.norm1 = nn.LayerNorm(d_model)
 
-        self.cross_attn = MultiHeadAttention(d_model, h)
+        self.cross_attn = MultiHeadAttention(d_model, h, p_drop)
         self.dropout2 = nn.Dropout(p_drop)
         self.norm2 = nn.LayerNorm(d_model)
 
