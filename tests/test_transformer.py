@@ -133,7 +133,7 @@ def test_transformer():
 
     # check if gradients are the same
     check_transformer_grads(baseline_model, my_model)
-    # breakpoint()
+    breakpoint()
 
 if __name__ == "__main__":
     test_transformer()
