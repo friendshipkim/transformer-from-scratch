@@ -1,12 +1,30 @@
-# Transformer-from-scratch
+# Replication Project: Transformer-from-scratch
 
-Replication Project: Transformer model built from scratch.
+The goal of this project is to implement a transformer model from scratch and replicate the machine translation performance of [Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf) paper. 
 
-## Transformer architecture
-### model architecture
+## Transformer model
+
+Considering the model's universal popularity, I'll just brefiely describe its architecture. Transformer eschewing recurrence and rely entirely on an attention mechanism to draw global dependencies between input and output. It allows significantly more parralelization than RNN. 
+
+### Model architecture
+
 ![image1](./assets/architecture.png)
+
+In my implementation, the module is divided into 4 big parts.
+
+* Embedding
+  * token embedding
+  * positional encoding
+* Encoder
+  * Encoder layer
+* Decoder
+  * Decoder layer
+* Classifier
+
 ### attention architecture
+
 ![image1](./assets/attention.png)
+
 ```python
     def calculate_attn(
             self, q: Tensor, k: Tensor, v: Tensor, mask: Tensor = None
@@ -14,16 +32,14 @@ Replication Project: Transformer model built from scratch.
         """
         calculate scaled dot product attention
 
-        :param q: torch.Tensor, shape: (batch_size, h, q_len, d_k)
-        :param k: torch.Tensor, shape: (batch_size, h, k_len, d_k)
-        :param v: torch.Tensor, shape: (batch_size, h, k_len, d_k)
-        :param mask: torch.Tensor, shape: (batch_size, h, q_len, k_len)
+        :param q: torch.Tensor, shape: (batch_size * h, q_len, d_k)
+        :param k: torch.Tensor, shape: (batch_size * h, k_len, d_k)
+        :param v: torch.Tensor, shape: (batch_size * h, k_len, d_k)
+        :param mask: torch.Tensor, shape: (batch_size * h, q_len, k_len)
 
-        :return attn_out: torch.Tensor, shape: (batch_size, h, max_seq_len, d_k)
-        :return attn_score: torch.Tensor, shape: (batch_size, h, max_seq_len, d_k)
+        :return attn_out: torch.Tensor, shape: (batch_size * h, q_len, k_len)
+        :return attn_score: torch.Tensor, shape: (batch_size * h, q_len, q_len)
         """
-
-        # if mask != None: print("mask", mask.shape) # now (batch_size, seq_len)
 
         # 1. scaling
         q = q / math.sqrt(self.d_k)
@@ -47,35 +63,43 @@ Replication Project: Transformer model built from scratch.
 
         return attn_out, attn_score
 ```
+
 ## Setup
+
 ```angular2html
 pip install requirements.txt
 pip install -e .
 ```
 
 ## Checklist
+
 Before training, let's check if the baseline and my implementation have the same forward and backward pass.
+
 - [x] Check the number of parameters
 - [x] Check if output tensors are the same size
 - [x] Check self/cross attention masks
-    * In torch.transformer, masks are given as inputs. They have the different shape as my model. But checked if baseline masks can be made by reshaping my masks
+  * In torch.transformer, masks are given as inputs. They have the different shape as my model. But checked if baseline masks can be made by reshaping my masks
 - [x] Check model.state_dict()
-    - [x] Check if the parameters has the same dimensions
+  - [x] Check if the parameters has the same dimensions
 - [x] Copy the weights and
-    - [x] feed an input and check if the output is the same
-        - [x] Without padding
-           - [x] Precision issue - FIXED: change scaled dot product attention
-        - [x] With padding
+  - [x] feed an input and check if the output is the same
+    - [x] Without padding
+      - [x] Precision issue - FIXED: change scaled dot product attention
+    - [x] With padding
 - [x] Call loss.backward() once and check if the gradients are the same for all parameters
 
 * how to test
+
 ```angular2html
 python ./tests/test_trainsformer.py
 ```
+
 ## Training 
+
 * Task - Machine Translation
 * Dataset - Multi30k
 * Baseline model training logs
+
 ```
     Epoch: 1, Train loss: 4.487, Val loss: 3.824, Epoch time = 60.442s
     Epoch: 2, Train loss: 3.629, Val loss: 3.481, Epoch time = 57.315s
@@ -95,6 +119,7 @@ python ./tests/test_trainsformer.py
 ```
 
 * My model training logs
+
 ```
     Epoch: 1, Train loss: 4.870, Val loss: 4.093, Epoch time = 56.626s
     Epoch: 2, Train loss: 3.876, Val loss: 3.730, Epoch time = 56.522s
