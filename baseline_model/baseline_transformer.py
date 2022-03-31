@@ -75,6 +75,8 @@ class BaselineTransformer(nn.Module):
         self.tgt_tok_emb = TokenEmbedding(tgt_vocab_size, emb_size)
         self.positional_encoding = PositionalEncoding(emb_size, dropout)
 
+        self._reset_parameters()
+
     def forward(self,
                 src: Tensor,
                 trg: Tensor, ):
@@ -120,3 +122,12 @@ class BaselineTransformer(nn.Module):
         src_padding_mask = (src == self.pad_idx)
         tgt_padding_mask = (tgt == self.pad_idx)
         return src_mask, tgt_mask, src_padding_mask, tgt_padding_mask
+
+    def _reset_parameters(self):
+        init_layers = [self.generator,
+                       self.src_tok_emb,
+                       self.tgt_tok_emb]
+        for layer in init_layers:
+            for name, p in layer.named_parameters():
+                if p.dim() > 1:
+                    nn.init.xavier_uniform_(p)
