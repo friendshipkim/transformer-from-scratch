@@ -32,13 +32,11 @@ def test_scaled_dot_product_attention():
     # baseline
     baseline_attn_output, baseline_attn_weights = F._scaled_dot_product_attention(q, k, v)
     # my
-    my_attn = MultiHeadAttention(d_model=cfg.d_model, h=cfg.h)
+    my_attn = MultiHeadAttention(d_model=cfg.d_model, h=cfg.h, p_drop=0)
     my_attn_output, my_attn_weights = my_attn.calculate_attn(q, k, v)
 
     print("Attention outputs are the same?", torch.isclose(baseline_attn_output, my_attn_output).all().item())
     print("Attention weights are the same?", torch.isclose(baseline_attn_weights, my_attn_weights).all().item())
-
-    breakpoint()
 
 
 if __name__ == "__main__":

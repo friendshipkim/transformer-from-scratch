@@ -24,8 +24,10 @@ from torch.nn import TransformerEncoderLayer as BaselineEncLayer
 from model.layer.encoder_layer import EncoderLayer as MyEncLayer
 
 from test_utils import *
+import config as cfg
 
 # global variables
+print_input_flag = True
 load_input_flag = False  # True if to load stored input tensor
 save_input_flag = False  # True if to save generated random input tensor
 input_file_path = 'test_input/input_pad_2by10.pt'  # file path to the stored input tensor
@@ -128,6 +130,7 @@ def test_encoder_pad():
                                        vocab_size=cfg.src_vocab_size,
                                        seq_len=cfg.src_seq_len,
                                        batch_size=cfg.batch_size,
+                                       print_flag=print_input_flag,
                                        save_flag=save_input_flag,
                                        file_path=input_file_path).to(cfg.device)  # generate rand input
 
@@ -145,7 +148,7 @@ def test_encoder_pad():
     print("Embedding outputs are the same?:", emb_flag)
 
     # encoder layer output, shape: (batch_size, src_seq_len, d_model)
-    my_enc_out = my_enc_layer(x=my_src_emb,
+    my_enc_out = my_enc_layer(src_emb=my_src_emb,
                               src_pad_mask=my_src_padding_mask)
     baseline_enc_out = baseline_enc_layer(src=baseline_src_emb,
                                           src_mask=baseline_src_mask,
@@ -156,8 +159,7 @@ def test_encoder_pad():
     print("Attention outputs are the same?:", attn_out_flag)
 
     # compare attn score
-    attn_score_flag = torch.isclose(baseline_enc_layer.attn_score,
-                                    torch.mean(my_enc_layer.attn_score, dim=1)).all().item()
+    attn_score_flag = torch.isclose(baseline_enc_layer.attn_score, my_enc_layer.attn_score).all().item()
     print("Attention scores are the same?:", attn_score_flag)
 
     # compare encoder output
@@ -176,7 +178,6 @@ def test_encoder_pad():
         breakpoint()
     else:
         print("Test Successful!")
-        exit
 
 
 if __name__ == "__main__":

@@ -1,3 +1,7 @@
+"""
+deprecated
+"""
+
 import torch
 from model.sublayer.multihead_attention import MultiHeadAttention
 
@@ -7,6 +11,7 @@ def test_attention():
     d_model = 256
     h = 4
     batch_size = 16
+    p_drop = 0
     # use different q_max_seq_length and k_max_seq_len for test
     q_max_seq_len = 10
     k_max_seq_len = 20
@@ -24,7 +29,7 @@ def test_attention():
     # mask = torch.randint(2, (batch_size, h, q_max_seq_len, k_max_seq_len)) - original
 
     # attention output
-    attn = MultiHeadAttention(d_model, h)
+    attn = MultiHeadAttention(d_model, h, p_drop)
     out_dict = attn(q, k, v, mask=mask)
     out = out_dict["output"]
     attn_score = out_dict["attn_score"]

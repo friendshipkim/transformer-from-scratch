@@ -17,8 +17,10 @@ from torch.nn import TransformerDecoderLayer as BaselineDecLayer
 from model.layer.decoder_layer import DecoderLayer as MyDecLayer
 
 from test_utils import *
+import config as cfg
 
 # global variables
+print_input_flag = True
 load_input_flag = False  # True if to load stored input tensor
 save_input_flag = False  # True if to save generated random input tensor
 input_file_path = 'test_input/tgt_input_pad_2by12.pt'  # file path to the stored input tensor
@@ -137,6 +139,7 @@ def test_decoder_pad():
                                        vocab_size=cfg.tgt_vocab_size,
                                        seq_len=cfg.tgt_seq_len,
                                        batch_size=cfg.batch_size,
+                                       print_flag=print_input_flag,
                                        save_flag=save_input_flag,
                                        file_path=input_file_path).to(cfg.device)  # generate rand input
 
@@ -172,7 +175,7 @@ def test_decoder_pad():
                                           memory_mask=baseline_memory_mask,
                                           memory_key_padding_mask=baseline_memory_key_padding_mask)
 
-    my_dec_out = my_dec_layer(x=my_tgt_emb,
+    my_dec_out = my_dec_layer(tgt_emb=my_tgt_emb,
                               enc_output=enc_output,
                               tgt_pad_mask=my_tgt_pad_mask,
                               tgt_autoregressive_mask=my_tgt_ag_mask,
@@ -180,20 +183,18 @@ def test_decoder_pad():
 
     # compare self attn output
     self_attn_out_flag = torch.isclose(baseline_dec_layer.self_attn_out, my_dec_layer.self_attn_out).all().item()
-    print("self attention outputs are the same?:", self_attn_out_flag)
+    print("Self attention outputs are the same?:", self_attn_out_flag)
 
     # compare self attn score
-    cross_attn_score_flag = torch.isclose(baseline_dec_layer.self_attn_score,
-                                          torch.mean(my_dec_layer.self_attn_score, dim=1)).all().item()
-    print("self attention scores are the same?:", cross_attn_score_flag)
+    cross_attn_score_flag = torch.isclose(baseline_dec_layer.self_attn_score, my_dec_layer.self_attn_score).all().item()
+    print("Self attention scores are the same?:", cross_attn_score_flag)
 
     # compare cross attn output
     cross_attn_out_flag = torch.isclose(baseline_dec_layer.cross_attn_out, my_dec_layer.cross_attn_out).all().item()
     print("cross attention outputs are the same?:", cross_attn_out_flag)
 
     # compare cross attn score
-    cross_attn_score_flag = torch.isclose(baseline_dec_layer.cross_attn_score,
-                                          torch.mean(my_dec_layer.cross_attn_score, dim=1)).all().item()
+    cross_attn_score_flag = torch.isclose(baseline_dec_layer.cross_attn_score, my_dec_layer.cross_attn_score).all().item()
     print("cross attention scores are the same?:", cross_attn_score_flag)
 
     # compare decoder output
