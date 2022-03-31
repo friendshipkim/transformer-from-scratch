@@ -1,9 +1,9 @@
 import torch
 import os
 import numpy as np
-from .layer_mapping import *
-
 from torch import Tensor, LongTensor
+
+from layer_mapping import *
 
 
 def generate_input_nopad(seed: int,
@@ -11,6 +11,7 @@ def generate_input_nopad(seed: int,
                          vocab_size: int,
                          seq_len: int,
                          batch_size: int,
+                         print_flag: bool = False,
                          save_flag: bool = False,
                          file_path: str = None) -> LongTensor:
     """
@@ -23,8 +24,9 @@ def generate_input_nopad(seed: int,
 
     torch.manual_seed(seed)
     input_nopad = torch.randint(pad_idx + 1, vocab_size, (batch_size, seq_len)).long()
-    print("input_nopad shape:", input_nopad.shape)
-    print("input_nopad:", input_nopad)
+    if print_flag:
+        print("input_nopad shape:", input_nopad.shape)
+        print("input_nopad:", input_nopad)
 
     if save_flag:
         current_path = os.path.dirname(os.path.realpath(__file__))
@@ -34,7 +36,8 @@ def generate_input_nopad(seed: int,
     return input_nopad
 
 
-def load_input_nopad(file_path: str):
+def load_input_nopad(file_path: str,
+                     print_flag: bool = False):
     """
     load an input tensor
 
@@ -45,8 +48,9 @@ def load_input_nopad(file_path: str):
     current_path = os.path.dirname(os.path.realpath(__file__))
     input_nopad = torch.load(os.path.join(current_path, file_path))
     print("input tensor loaded from", file_path)
-    print("input_nopad shape:", input_nopad.shape)
-    print("input_nopad:", input_nopad)
+    if print_flag:
+        print("input_nopad shape:", input_nopad.shape)
+        print("input_nopad:", input_nopad)
     return input_nopad
 
 
@@ -55,6 +59,7 @@ def generate_input_pad(seed: int,
                        vocab_size: int,
                        seq_len: int,
                        batch_size: int,
+                       print_flag: bool = False,
                        save_flag: bool = False,
                        file_path: str = None) -> LongTensor:
     """
@@ -77,8 +82,9 @@ def generate_input_pad(seed: int,
         sample = torch.cat((valid, padding), dim=0)
         input_pad[i] = sample
 
-    print("input_pad shape:", input_pad.shape)
-    print("input_pad:", input_pad)
+    if print_flag:
+        print("input_pad shape:", input_pad.shape)
+        print("input_pad:", input_pad)
 
     if save_flag:
         current_path = os.path.dirname(os.path.realpath(__file__))
@@ -88,12 +94,14 @@ def generate_input_pad(seed: int,
     return input_pad
 
 
-def load_input_pad(file_path):
+def load_input_pad(file_path: str,
+                   print_flag: bool = False,):
     current_path = os.path.dirname(os.path.realpath(__file__))
     input_pad = torch.load(os.path.join(current_path, file_path))
     print("input tensor loaded from", file_path)
-    print("input_pad shape:", input_pad.shape)
-    print("input_pad:", input_pad)
+    if print_flag:
+        print("input_pad shape:", input_pad.shape)
+        print("input_pad:", input_pad)
     return input_pad
 
 
@@ -179,7 +187,7 @@ def copy_encoder_decoder_dict(src, tgt, n_layers, model_type):
     # tgt = mine
     # type - "encoder" or "decoder"
 
-    copy_count = 0
+    tgt_count = 0
 
     for layer in range(n_layers):
         # prefix
@@ -200,7 +208,7 @@ def copy_encoder_decoder_dict(src, tgt, n_layers, model_type):
                 for src_weight, tgt_layer_name in zip(src_weights, tgt_layer_names):
                     if same_size(tgt[tgt_layer_name], src_weight):
                         tgt[tgt_layer_name] = src_weight
-                        copy_count += 1
+                        tgt_count += 1
                     else:
                         assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
             else:
@@ -209,7 +217,7 @@ def copy_encoder_decoder_dict(src, tgt, n_layers, model_type):
 
                 if same_size(src[src_layer_name], tgt[tgt_layer_name]):
                     tgt[tgt_layer_name] = src[src_layer_name]
-                    copy_count += 1
+                    tgt_count += 1
                 else:
                     assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
 
@@ -222,11 +230,11 @@ def copy_encoder_decoder_dict(src, tgt, n_layers, model_type):
 
         if same_size(src[src_layer_name], tgt[tgt_layer_name]):
             tgt[tgt_layer_name] = src[src_layer_name]
-            copy_count += 1
+            tgt_count += 1
         else:
             assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
 
-    assert len(tgt) == copy_count, f"{model_type} is not copied correctly"
+    assert len(tgt) == tgt_count, f"{model_type} is not copied correctly"
     print(f"{model_type} copied: baseline -> my")
     return tgt
 
@@ -234,7 +242,10 @@ def copy_encoder_decoder_dict(src, tgt, n_layers, model_type):
 def copy_transformer_dict(src, tgt, n_layers):
     # src = baseline
     # tgt = mine
-    copy_count = 0
+    print("Copying weights... baseline -> my")
+
+    src_count = 0
+    tgt_count = 0
 
     # copy embedding, classifier
     mappings = [embedding_mapping, classifier_mapping]
@@ -242,7 +253,8 @@ def copy_transformer_dict(src, tgt, n_layers):
         for src_layer_name, tgt_layer_name in mapping.items():
             if same_size(src[src_layer_name], tgt[tgt_layer_name]):
                 tgt[tgt_layer_name] = src[src_layer_name]
-                copy_count += 1
+                src_count += 1
+                tgt_count += 1
             else:
                 assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
     print("embedding and classifier copied")
@@ -269,16 +281,18 @@ def copy_transformer_dict(src, tgt, n_layers):
                     for src_weight, tgt_layer_name in zip(src_weights, tgt_layer_names):
                         if same_size(tgt[tgt_layer_name], src_weight):
                             tgt[tgt_layer_name] = src_weight
-                            copy_count += 1
+                            tgt_count += 1
                         else:
                             assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
+                    src_count += 1
                 else:
                     src_layer_name = ".".join([src_prefix, src_postfix])
                     tgt_layer_name = ".".join([tgt_prefix, tgt_postfix])
 
                     if same_size(src[src_layer_name], tgt[tgt_layer_name]):
                         tgt[tgt_layer_name] = src[src_layer_name]
-                        copy_count += 1
+                        tgt_count += 1
+                        src_count += 1
                     else:
                         assert False, "%d - %d tensor shape not matched" % (src_layer_name, tgt_layer_name)
 
@@ -291,13 +305,26 @@ def copy_transformer_dict(src, tgt, n_layers):
 
             if same_size(src[src_layer_name], tgt[tgt_layer_name]):
                 tgt[tgt_layer_name] = src[src_layer_name]
-                copy_count += 1
+                tgt_count += 1
+                src_count += 1
             else:
                 assert False, f"{src_layer_name} - {tgt_layer_name} doesn't match"
 
-    assert len(tgt) == copy_count, "Transformer is not copied correctly"
-    print("Transformer copied: baseline -> my")
+    assert len(tgt) == tgt_count, "Transformer is not copied correctly"
+    assert len(src) == src_count, "Transformer is not copied correctly"
     return tgt
+
+
+def print_unmatch(src, tgt, lower_atol=1e-07):
+    unmatch_indices = (torch.isclose(src, tgt) == False).nonzero(as_tuple=True)
+    src_unmatch = src[unmatch_indices]
+    tgt_unmatch = tgt[unmatch_indices]
+
+    print("unmatched count:", len(src_unmatch))
+    print("unmatched values:", src_unmatch)
+    print(f"compare with low precision ({lower_atol}):",
+          torch.isclose(src_unmatch, tgt_unmatch, atol=lower_atol))
+    print()
 
 
 def check_transformer_grads(src, tgt, atol=1e-7):
@@ -341,18 +368,13 @@ def check_transformer_grads(src, tgt, atol=1e-7):
                         tgt_grad = tgt_grads_dict.pop(tgt_layer_name)
                         if not torch.isclose(src_grad_split, tgt_grad).all():
                             print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
-                            unmatch_indices = (torch.isclose(src_grad_split, tgt_grad) == False).nonzero(as_tuple=True)
-                            src_unmatch = src_grad_split[unmatch_indices]
-                            tgt_unmatch = tgt_grad[unmatch_indices]
-
-                            print("unmatched count:", len(src_unmatch))
-                            print("unmatched values:", src_unmatch)
-                            print(f"compare with low precision ({atol}):",
-                                  torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
-                            print()
+                            print_unmatch(src_grad_split, tgt_grad, lower_atol=atol)
                         else:
                             # print(f"{src_layer_name} - {tgt_layer_name} match")
                             pass
+                        # or just use
+                        # assert torch.isclose(src_grad_split, tgt_grad).all(), f"{src_layer_name} - {tgt_layer_name} doesn't match"
+
 
                 else:
                     tgt_layer_name = ".".join([tgt_prefix, tgt_postfix])
@@ -360,15 +382,7 @@ def check_transformer_grads(src, tgt, atol=1e-7):
 
                     if not torch.isclose(src_grad, tgt_grad).all():
                         print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
-                        unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
-                        src_unmatch = src_grad[unmatch_indices]
-                        tgt_unmatch = tgt_grad[unmatch_indices]
-
-                        print("unmatched count:", len(src_unmatch))
-                        print("unmatched values:", src_unmatch)
-                        print(f"compare with low precision ({atol}):",
-                              torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
-                        print()
+                        print_unmatch(src_grad, tgt_grad, lower_atol=atol)
                     else:
                         # print(f"{src_layer_name} - {tgt_layer_name} match")
                         pass
@@ -386,18 +400,13 @@ def check_transformer_grads(src, tgt, atol=1e-7):
 
                 if not torch.isclose(src_grad, tgt_grad).all():
                     print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
-                    unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
-                    src_unmatch = src_grad[unmatch_indices]
-                    tgt_unmatch = tgt_grad[unmatch_indices]
-
-                    print("unmatched count:", len(src_unmatch))
-                    print("unmatched values:", src_unmatch)
-                    print(f"compare with low precision ({atol}):",
-                          torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
-                    print()
+                    print_unmatch(src_grad, tgt_grad, lower_atol=atol)
                 else:
                     # print(f"{src_layer_name} - {tgt_layer_name} match")
                     pass
+                # or just use
+                # assert torch.isclose(src_grad, tgt_grad).all(), f"{src_layer_name} - {tgt_layer_name} doesn't match"
+
             else:
                 assert False, f"invalid layer type - {src_layer_name}"
 
@@ -409,15 +418,7 @@ def check_transformer_grads(src, tgt, atol=1e-7):
 
             if not torch.isclose(src_grad, tgt_grad).all():
                 print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
-                unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
-                src_unmatch = src_grad[unmatch_indices]
-                tgt_unmatch = tgt_grad[unmatch_indices]
-
-                print("unmatched count:", len(src_unmatch))
-                print("unmatched values:", src_unmatch)
-                print(f"compare with low precision ({atol}):",
-                      torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
-                print()
+                print_unmatch(src_grad, tgt_grad, lower_atol=atol)
             else:
                 # print(f"{src_layer_name} - {tgt_layer_name} match")
                 pass
@@ -429,20 +430,12 @@ def check_transformer_grads(src, tgt, atol=1e-7):
             tgt_grad = tgt_grads_dict.pop(tgt_layer_name)
 
             if not torch.isclose(src_grad, tgt_grad).all():
-                print(f"{src_layer_name} - {tgt_layer_name} doesn't match")
-                unmatch_indices = (torch.isclose(src_grad, tgt_grad) == False).nonzero(as_tuple=True)
-                src_unmatch = src_grad[unmatch_indices]
-                tgt_unmatch = tgt_grad[unmatch_indices]
-
-                print("unmatched count:", len(src_unmatch))
-                print("unmatched values:", src_unmatch)
-                print(f"compare with low precision ({atol}):",
-                      torch.isclose(src_unmatch, tgt_unmatch, atol=atol))
-                print()
+                print_unmatch(src_grad, tgt_grad, lower_atol=atol)
             else:
                 # print(f"{src_layer_name} - {tgt_layer_name} match")
                 pass
+
     assert len(tgt_grads_dict) == 0, "unchecked parameter left in target dictionary"
     print("Gradients checked!")
-    return
+
 
