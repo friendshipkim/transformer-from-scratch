@@ -26,6 +26,7 @@ class Transformer(nn.Module):
 
         self.pad_idx = pad_idx
         self.device = device
+        self.n_layers = n_layers
 
         # encoder
         self.src_tok_emb = TokenEmbedding(emb_size=d_model, vocab_size=src_vocab_size)
@@ -55,6 +56,9 @@ class Transformer(nn.Module):
         # final classifier
         self.classifier = nn.Linear(d_model, tgt_vocab_size)
 
+        # initialize
+        self._reset_parameters()
+
     def forward(self, src: Tensor, tgt: Tensor) -> typing.Tuple:
         """
         :param src: torch.Tensor, shape: (batch_size, src_seq_len)
@@ -66,14 +70,14 @@ class Transformer(nn.Module):
         src_pad_mask, tgt_pad_mask, tgt_autoregressive_mask = self.create_mask(src, tgt)
 
         # encoder
-        enc_embedding = self.positional_encoding(self.src_tok_emb(src))
-        enc_output = self.encoder(x=enc_embedding,
+        src_embedding = self.positional_encoding(self.src_tok_emb(src))
+        enc_output = self.encoder(src_emb=src_embedding,
                                   src_pad_mask=src_pad_mask)  # memory
 
         # decoder
-        dec_embedding = self.positional_encoding(self.tgt_tok_emb(tgt))
+        tgt_embedding = self.positional_encoding(self.tgt_tok_emb(tgt))
         dec_output = self.decoder(
-            x=dec_embedding,
+            tgt_emb=tgt_embedding,
             enc_output=enc_output,
             tgt_pad_mask=tgt_pad_mask,
             tgt_autoregressive_mask=tgt_autoregressive_mask,
@@ -82,7 +86,7 @@ class Transformer(nn.Module):
 
         # final classifier
         model_out = self.classifier(dec_output)
-        return enc_embedding, enc_output, dec_embedding, dec_output, model_out  # F.log_softmax(model_out, dim=-1) # TODO
+        return src_embedding, enc_output, tgt_embedding, dec_output, model_out  # F.log_softmax(model_out, dim=-1)
 
     def create_pad_mask(self, x: Tensor) -> Tensor:
         """
@@ -109,5 +113,15 @@ class Transformer(nn.Module):
         tgt_autoregressive_mask = self.create_autoregressive_mask(tgt)
         return src_pad_mask, tgt_pad_mask, tgt_autoregressive_mask
 
-# for deprecated
-# .unsqueeze(-2).unsqueeze(1)
+    def _reset_parameters(self):
+        """Initialize parameters in the transformer model."""
+        # initialize except these layers
+        non_init_layers = [f"{enc_dec}.layers.{layer_num}.{attn_type}.{fc_type}.weight"
+                           for enc_dec in ["encoder", "decoder"]
+                           for layer_num in range(self.n_layers)
+                           for attn_type in ["self_attn", "cross_attn"]
+                           for fc_type in ["fc_q", "fc_k", "fc_v"]]
+
+        for name, p in self.named_parameters():
+            if (name not in non_init_layers) and (p.dim() > 1):
+                nn.init.xavier_uniform_(p)

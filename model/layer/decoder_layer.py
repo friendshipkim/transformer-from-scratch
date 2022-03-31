@@ -5,6 +5,7 @@ from model.sublayer.multihead_attention import MultiHeadAttention
 from model.sublayer.pointwise_feedforward import PointwiseFeedForward
 
 
+
 class DecoderLayer(nn.Module):
     def __init__(self, d_model: int, h: int, ffn_hidden: int, p_drop: float):
         super(DecoderLayer, self).__init__()
@@ -23,11 +24,11 @@ class DecoderLayer(nn.Module):
         self.norm3 = nn.LayerNorm(d_model)
 
     def forward(
-            self, x: Tensor, enc_output: Tensor, tgt_pad_mask: Tensor, tgt_autoregressive_mask: Tensor,
+            self, tgt_emb: Tensor, enc_output: Tensor, tgt_pad_mask: Tensor, tgt_autoregressive_mask: Tensor,
             memory_pad_mask: Tensor
     ) -> Tensor:
         """
-        :param x: torch.Tensor, Decoder input, shape: (batch_size, tgt_seq_len, d_model)
+        :param tgt_emb: torch.Tensor, Decoder input, shape: (batch_size, tgt_seq_len, d_model)
         :param enc_output: torch.Tensor, Encoder output, shape: (batch_size, src_seq_len, d_model)
         :param tgt_pad_mask: torch.Tensor, shape: (batch_size, tgt_seq_len)
         :param tgt_autoregressive_mask: torch.Tensor, shape: (tgt_seq_len, tgt_seq_len)
@@ -39,35 +40,36 @@ class DecoderLayer(nn.Module):
         tgt_mask, cross_mask = self.create_dec_mask(tgt_pad_mask, tgt_autoregressive_mask, memory_pad_mask)
 
         # 1. self-attention
-        x_cp = x
-        self_attn_out, self_attn_score = self.self_attn(q=x, k=x, v=x,
+        self_attn_out, self_attn_score = self.self_attn(q=tgt_emb,
+                                                        k=tgt_emb,
+                                                        v=tgt_emb,
                                                         mask=tgt_mask)
         # hook mid outputs
         self.self_attn_out = self_attn_out
         self.self_attn_score = self_attn_score
 
-        x = self.dropout1(self_attn_out)
-        x = self.norm1(x + x_cp)
+        self_attn_out = self.dropout1(self_attn_out)
+        self_attn_out = self.norm1(tgt_emb + self_attn_out)
 
         # 2. cross-attention
-        x_cp = x
-        cross_attn_out, cross_attn_score = self.cross_attn(q=x, k=enc_output, v=enc_output,
+        cross_attn_out, cross_attn_score = self.cross_attn(q=self_attn_out,
+                                                           k=enc_output,
+                                                           v=enc_output,
                                                            mask=cross_mask)
 
         # hook mid outputs
         self.cross_attn_out = cross_attn_out
         self.cross_attn_score = cross_attn_score
 
-        x = self.dropout2(cross_attn_out)
-        x = self.norm2(x + x_cp)
+        cross_attn_out = self.dropout2(cross_attn_out)
+        cross_attn_out = self.norm2(self_attn_out + cross_attn_out)
 
         # 2. feed forward
-        x_cp = x
-        x = self.ffn(x)
-        x = self.dropout3(x)
-        x = self.norm3(x + x_cp)
+        ffn_out = self.ffn(cross_attn_out)
+        ffn_out = self.dropout3(ffn_out)
+        dec_out = self.norm3(cross_attn_out + ffn_out)
 
-        return x
+        return dec_out
 
     def create_dec_mask(self, tgt_pad_mask: Tensor, tgt_autoregressive_mask: Tensor, memory_pad_mask: Tensor) \
             -> typing.Tuple[Tensor, Tensor]:

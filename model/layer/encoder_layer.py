@@ -13,38 +13,37 @@ class EncoderLayer(nn.Module):
         self.h = h
 
         self.self_attn = MultiHeadAttention(d_model, h, p_drop)
-        self.norm1 = nn.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(p_drop)
+        self.norm1 = nn.LayerNorm(d_model)
 
         self.ffn = PointwiseFeedForward(d_model, ffn_hidden, p_drop)
-        self.norm2 = nn.LayerNorm(d_model)
         self.dropout2 = nn.Dropout(p_drop)
+        self.norm2 = nn.LayerNorm(d_model)
 
-    def forward(self, x: Tensor, src_pad_mask: Tensor = None) -> Tensor:
+    def forward(self, src_emb: Tensor, src_pad_mask: Tensor = None) -> Tensor:
         """
-        :param x: torch.Tensor, shape: (batch_size, src_seq_len, d_model)
+        :param src_emb: torch.Tensor, shape: (batch_size, src_seq_len, d_model)
         :param src_pad_mask: torch.Tensor, shape (batch_size, src_seq_len)
         :return: torch.Tensor, shape (batch_size, src_seq_len, d_model)
         """
 
         # 1. attention
-        attn_out, attn_score = self.self_attn(q=x, k=x, v=x,
+        attn_out, attn_score = self.self_attn(q=src_emb, k=src_emb, v=src_emb,
                                               mask=None if src_pad_mask == None
                                                         else self.create_enc_mask(pad_mask=src_pad_mask))
-        out = self.dropout1(attn_out)
-        out = self.norm1(x + out)
-
-        # tmp: saving attention outputs
+        # hook mid outputs
         self.attn_score = attn_score
         self.attn_out = attn_out
 
-        # 2. feed forward
-        cp_out = out
-        out = self.ffn(out)
-        out = self.dropout2(out)
-        out = self.norm2(out + cp_out)
+        attn_out = self.dropout1(attn_out)
+        attn_out = self.norm1(src_emb + attn_out)
 
-        return out
+        # 2. feed forward
+        ffn_out = self.ffn(attn_out)
+        ffn_out = self.dropout2(ffn_out)
+        enc_out = self.norm2(attn_out + ffn_out)
+
+        return enc_out
 
     def create_enc_mask(self, pad_mask: Tensor):
         # TODO maybe put this into multihead

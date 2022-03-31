@@ -11,13 +11,13 @@ class Decoder(nn.Module):
         self.layers = nn.ModuleList(
             [DecoderLayer(d_model, h, ffn_hidden, p_drop) for _ in range(n_layers)]
         )
-        self.norm = nn.LayerNorm(d_model)  # TODO: layernorm at last?
+        self.norm = nn.LayerNorm(d_model)
 
     def forward(
-        self, x: Tensor, enc_output: Tensor, tgt_pad_mask: Tensor, tgt_autoregressive_mask: Tensor, memory_pad_mask: Tensor
+        self, tgt_emb: Tensor, enc_output: Tensor, tgt_pad_mask: Tensor, tgt_autoregressive_mask: Tensor, memory_pad_mask: Tensor
     ) -> Tensor:
         """
-        :param x: torch.Tensor, Decoder input, shape: (batch_size, max_seq_len, d_model)
+        :param tgt_emb: torch.Tensor, Decoder input, shape: (batch_size, max_seq_len, d_model)
         :param enc_output: torch.Tensor, Encoder output, shape: (batch_size, src_seq_len, d_model)
         :param tgt_pad_mask: torch.Tensor, shape: (batch_size, tgt_seq_len)
         :param tgt_autoregressive_mask: torch.Tensor, shape: (tgt_seq_len, tgt_seq_len)
@@ -25,7 +25,8 @@ class Decoder(nn.Module):
 
         :return: torch.Tensor, shape: (batch_size, max_seq_len, d_model)
         """
+        out = tgt_emb
         for layer in self.layers:
-            x = layer(x, enc_output, tgt_pad_mask, tgt_autoregressive_mask, memory_pad_mask)
-        x = self.norm(x)
-        return x
+            out = layer(out, enc_output, tgt_pad_mask, tgt_autoregressive_mask, memory_pad_mask)
+        out = self.norm(out)
+        return out
