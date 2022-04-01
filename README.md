@@ -1,29 +1,62 @@
-Longer version for reference: https://friendshipkim.notion.site/Implementing-Transformer-from-Scratch-5ec3145047774d5899df2470a73fc94f
+Longer version for future reference: https://friendshipkim.notion.site/Implementing-Transformer-from-Scratch-5ec3145047774d5899df2470a73fc94f
 
-# Replication Project: Transformer-from-scratch
+# Implementing Transformer from Scratch
 
-The goal of this project is to implement a transformer model from scratch and replicate the machine translation performance of [Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf) paper. 
+---
 
-## Transformer model
+The goal of this project is to implement a Transformer model from scratch, originally proposed in “[Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf)” paper. Among lots of good implementations, I chose the PyTorch version `torch.nn.transformer` as the baseline. To be specific, my goal is to implement an identical model to the one in [this tutorial](https://pytorch.org/tutorials/beginner/translation_transformer.html).
 
-Considering the model's universal popularity, I'll just brefiely describe its architecture. Transformer eschewing recurrence and rely entirely on an attention mechanism to draw global dependencies between input and output. It allows significantly more parralelization than RNN. 
+## Transformer basics
+
+Given the model's popularity, I'll only provide a brief description of its architecture. Transformer makes use of the attention mechanism to draw global dependencies between input and output. It can achieve significantly more parallelization than RNN by avoiding recurrence with attention. The skeleton of the model is encoder-decoder architecture. The encoder maps an input sequence into continuous representations, which we refer to as memory. The decoder generates an output sequence based on memory.
 
 ### Model architecture
 
 ![image1](./assets/architecture.png)
 
-In my implementation, the module is divided into 4 big parts.
+The model architecture is depicted in Figure 1 of the paper. It is divided into four major modules: embedding, encoder, decoder, and final classifier. 
 
-* Embedding
-  * token embedding
-  * positional encoding
-* Encoder
-  * Encoder layer
-* Decoder
-  * Decoder layer
-* Classifier
+- **Embedding**
+    - Token embedding
+    - Positional encoding
+- **Encoder** (Stack of N identical encoder layers)
+    - Encoder layer
+        - Multi-head self-attention block
+        - Feed-forward block
+- **Decoder** (Stack of N identical encoder layers)
+    - Decoder layer
+        - Multi-head self-attention block
+        - Multi-head cross-attention block
+        - Feed-forward block
+- **Final classifier**
 
-### attention architecture
+In terms of implementation, we have four basic building blocks, which are depicted in different colors above. Each building block performs the following:
+
+- Token embedding - Learned embeddings to convert input and output tokens to vectors with `d model` dimensions.
+- Positional encoding - Indicates the relative or absolute position of the tokens in the sequence, and is added element-wise to token embeddings.
+- Multi-head attention block - Attention maps a query and a set of key-value pairs to an output. The multi-head attention block is made up of `h` parallel attention heads. Inputs and outputs for each attention head are `d_k = d model / h` dimensioned vectors.
+- Feed-forward block - A fully connected feed-forward network composed of two linear transformations with a ReLU activation in between.
+
+## My implementation
+
+In my implementation, the embedding and final classifier are contained in `model/transformer.py`, while the encoder and decoder are contained in `model/encoder.py` and `model/decoder.py`, respectively. The basic building blocks mentioned above can be found in the `model/sublayer/` directory. This is how I organized my model implementation.
+
+```bash
+model
+├── transformer.py
+├── encoder.py
+├── decoder.py
+├── layer
+│   ├── encoder_layer.py
+│   └── decoder_layer.py
+├── sublayer
+│   ├── multihead_attention.py
+│   ├── ffn_layer.py
+│   ├── token_embedding.py
+│   └── positional_encoding.py
+```
+
+### Scaled dot-product attention
 
 ![image1](./assets/attention.png)
 
