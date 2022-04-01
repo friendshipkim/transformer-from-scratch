@@ -1,3 +1,5 @@
+Longer version for reference: https://friendshipkim.notion.site/Implementing-Transformer-from-Scratch-5ec3145047774d5899df2470a73fc94f
+
 # Replication Project: Transformer-from-scratch
 
 The goal of this project is to implement a transformer model from scratch and replicate the machine translation performance of [Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf) paper. 
