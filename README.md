@@ -1,9 +1,7 @@
 Longer version for future reference: https://friendshipkim.notion.site/Implementing-Transformer-from-Scratch-5ec3145047774d5899df2470a73fc94f
 
 # Implementing Transformer from Scratch
-
-The goal of this project is to implement a Transformer model from scratch, originally proposed in “[Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf)” paper. Among lots of good implementations, I chose the PyTorch version `torch.nn.transformer` as the baseline. To be specific, my goal is to implement an identical model to the one in [this tutorial](https://pytorch.org/tutorials/beginner/translation_transformer.html). 
-
+The goal of this project is to implement a Transformer model from scratch, originally proposed in [Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf) paper. Among lots of good implementations, I chose PyTorch transformer - `torch.nn.transformer` as the baseline. My goal is to replicate the model and machine translation results from [this tutorial](https://pytorch.org/tutorials/beginner/translation_transformer.html).
 ## Transformer basics
 
 Given the model's popularity, I'll only provide a brief description of its architecture. Transformer makes use of the attention mechanism to draw global dependencies between input and output. It can achieve significantly more parallelization than RNN by avoiding recurrence with attention. The skeleton of the model is encoder-decoder architecture. The encoder maps an input sequence into continuous representations, which we refer to as memory. The decoder generates an output sequence based on memory.
@@ -17,18 +15,18 @@ The model architecture is depicted in Figure 1 of the paper. It is divided into 
 - **Embedding**
     - Token embedding
     - Positional encoding
-- **Encoder** (Stack of N identical encoder layers)
+- **Encoder** - Stack of N identical encoder layers)
     - Encoder layer
         - Multi-head self-attention block
         - Feed-forward block
-- **Decoder** (Stack of N identical encoder layers)
+- **Decoder** - Stack of N identical encoder layers)
     - Decoder layer
         - Multi-head self-attention block
         - Multi-head cross-attention block
         - Feed-forward block
 - **Final classifier**
 
-In terms of implementation, we have four basic building blocks, which are depicted in different colors above. Each building block performs the following:
+In terms of implementation, we have four basic building blocks. Each building block performs the following:
 
 - Token embedding - Learned embeddings to convert input and output tokens to vectors with `d_model` dimensions.
 - Positional encoding - Indicates the relative or absolute position of the tokens in the sequence, and is added element-wise to token embeddings.
@@ -37,7 +35,7 @@ In terms of implementation, we have four basic building blocks, which are depict
 
 ## My implementation
 
-In my implementation, the embedding and final classifier are contained in `model/transformer.py`, while the encoder and decoder are contained in `model/encoder.py` and `model/decoder.py`, respectively. The basic building blocks mentioned above can be found in the `model/sublayer/` directory. This is how I organized my model implementation.
+In my implementation, the embedding and final classifier are encapsulated in `model/transformer.py`, while the encoder and decoder are in `model/encoder.py` and `model/decoder.py`, respectively. The basic building blocks mentioned above are under `model/sublayer/` directory. This is how I organized my model implementation.
 
 ```bash
 model
@@ -60,7 +58,7 @@ model
 
 Now, let's take a closer look at scaled dot-product attention, which is at the heart of the transformer model. Scaled dot-product attention takes query, key, and value as inputs. The output is computed as a weighted sum of the values, with the weight determined by the query and key.
 
-My scaled dot-product attention method can be found in `model.sublayer.multihead_attention.MultiheadAttention` class. The query is a `batch_size * h, q_len, d_k` shaped tensor, and the key and value are also `batch_sizes * h, k_len, d_k` shaped tensors. The query can have different sequence lengths from the other two, but the key and value must have the same length. 
+My scaled dot-product attention method is under `model.sublayer.multihead_attention.MultiheadAttention` class. The query is a `batch_size * h, q_len, d_k` shaped tensor, and the key and value are also `batch_sizes * h, k_len, d_k` shaped tensors. The query can have different sequence lengths from the other two, but the key and value must have the same length. 
 
 The code is as follows:
 
@@ -117,16 +115,18 @@ Before we begin training, we need to make sure that my model has the same forwar
 
 - [x]  The number of parameters
 - [x]  Output tensor shape
-- [x]  model.state_dict()
+- [x]  `model.state_dict()`
     - [x]  All the parameters have the same dimensions?
-        - My implementation has three input projections layers (`nn.Linear(d_model, d_model)`) for each query, key, and value. On the other hand, baseline implementation uses concatenated weights shaped `(3 * d_model, d_model)` and assign it as a `nn.Parameter` instead of using `nn.Linear`. As a result, the sizes of `state_dict()` differ, and we need to manually match layer names to copy one to the other.
-- [x]  Copy the weights and feed inputs
-    - [x]  Outputs are the same?
-        - [x]  Test an input without padding
-        - [x]  Test an Input with padding
-    - [x]  Attention masks
-    - [x]  Attention scores
-- [x]  Call loss.backward() once and check if the gradients are the same for all parameters
+        - My implementation has three input projections layers (each is `nn.Linear(d_model, d_model)`) for each query, key, and value. On the other hand, baseline implementation uses concatenated weights shaped `(3 * d_model, d_model)` and assigns it as an `nn.Parameter` instead of using `nn.Linear`. As a result, the sizes of `state_dict()` differ, and we need to manually match layer names to copy one to the other.
+- [x]  Copy the weights and feed an input
+    - [x]  without padding
+        - [x]  Outputs (embedding, encoder, decoder, classifier)
+        - [x]  Attention scores
+    - [x]  with padding
+        - [x]  Outputs (embedding, encoder, decoder, classifier)
+        - [x]  Attention masks
+        - [x]  Attention scores
+- [x]  Call `loss.backward()` once and check if the gradients are the same for all parameters
 
 ## Let’s run the code
 
@@ -137,7 +137,7 @@ pip install requirements.txt
 pip install -e .
 ```
 
-### Model Verification
+### Model verification
 
 ```bash
 python ./tests/test_trainsformer.py
@@ -146,6 +146,8 @@ python ./tests/test_trainsformer.py
 ### Training
 
 Now let’s train two models with the simple machine translation dataset, Multi30K. All model configurations and training hyperparameters are specified in `config.py` file. 
+
+To train the model: 
 
 ```bash
 # train baseline model
@@ -157,7 +159,7 @@ python main_mt.py --model-type my
 
 ### Testing
 
-evaluate test loss with the best model (lower validation loss)
+To evaluate and print the test loss of the best model (which has the lowest validation loss):
 
 ```bash
 # test baseline model
@@ -170,7 +172,6 @@ python main_mt.py --model-type my --evaluate True
 ## Results
 
 - Training logs
-
     - Baseline model
         
         ```bash
@@ -210,7 +211,9 @@ python main_mt.py --model-type my --evaluate True
         Epoch: 14, Train loss: 1.2777, Val loss: 2.0254, Epoch time = 73.164s
         Epoch: 15, Train loss: 1.1974, Val loss: 2.0281, Epoch time = 62.193s
         ```
-    Training loss trends of the two models are not exactly the same due to nondeterminism in weight initialization and dropout, but they show a similar trend. Nondeterminism can be removed by 1. using custom dropout instead of nn.Dropout, 2. using SGD instead of Adam, and 3. initializing the baseline model first and copying the weights to my model. After nondeterministic properties are removed, two models have the same training loss trend.
+        
+    Training loss trends of the two models are not exactly the same due to nondeterminism in weight initialization and dropout, but they show a similar trend. Nondeterminism can be removed by 1. using custom dropout instead of `nn.Dropout`, 2. using SGD instead of Adam, and 3. initializing the baseline model first and copying the weights to my model. After nondeterministic properties are removed, the two models have the same training loss trend.
+    
 
 - Test loss
     - Baseline model
@@ -220,7 +223,13 @@ python main_mt.py --model-type my --evaluate True
         ```
         
     - My model
-    
+        
         ```bash
         Test loss: 2.0239
         ```
+    
+## Future works
+
+- Train with larger datasets: IWSLT2016 or 2017
+- Implement beam search
+- Measure BLEU score
