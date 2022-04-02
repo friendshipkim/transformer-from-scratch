@@ -127,3 +127,100 @@ Before we begin training, we need to make sure that my model has the same forwar
     - [x]  Attention masks
     - [x]  Attention scores
 - [x]  Call loss.backward() once and check if the gradients are the same for all parameters
+
+## Let’s run the code
+
+### Setup
+
+```bash
+pip install requirements.txt
+pip install -e .
+```
+
+### Model Verification
+
+```bash
+python ./tests/test_trainsformer.py
+```
+
+### Training
+
+Now let’s train two models with the simple machine translation dataset, Multi30K. All model configurations and training hyperparameters are specified in `config.py` file. 
+
+```bash
+# train baseline model
+python main_mt.py --model-type baseline
+
+# train my model
+python main_mt.py --model-type my
+```
+
+### Testing
+
+evaluate test loss with the best model (lower validation loss)
+
+```bash
+# test baseline model
+python main_mt.py --model-type baseline --evaluate True
+
+# test my model
+python main_mt.py --model-type my --evaluate True
+```
+
+## Results
+
+- Training logs
+
+    - Baseline model
+        
+        ```bash
+        Epoch: 1, Train loss: 4.4871, Val loss: 3.8039, Epoch time = 52.652s
+        Epoch: 2, Train loss: 3.6234, Val loss: 3.4906, Epoch time = 52.577s
+        Epoch: 3, Train loss: 3.3233, Val loss: 3.2913, Epoch time = 52.472s
+        Epoch: 4, Train loss: 3.0833, Val loss: 3.1061, Epoch time = 52.459s
+        Epoch: 5, Train loss: 2.8785, Val loss: 2.9594, Epoch time = 52.458s
+        Epoch: 6, Train loss: 2.6489, Val loss: 2.7452, Epoch time = 52.673s
+        Epoch: 7, Train loss: 2.3937, Val loss: 2.4923, Epoch time = 52.777s
+        Epoch: 8, Train loss: 2.1348, Val loss: 2.3153, Epoch time = 61.615s
+        Epoch: 9, Train loss: 1.9175, Val loss: 2.1903, Epoch time = 52.868s
+        Epoch: 10, Train loss: 1.7464, Val loss: 2.1355, Epoch time = 53.000s
+        Epoch: 11, Train loss: 1.6094, Val loss: 2.0798, Epoch time = 52.860s
+        Epoch: 12, Train loss: 1.4846, Val loss: 2.0489, Epoch time = 52.964s
+        Epoch: 13, Train loss: 1.3819, Val loss: 2.0300, Epoch time = 52.968s
+        Epoch: 14, Train loss: 1.2895, Val loss: 2.0113, Epoch time = 53.001s
+        Epoch: 15, Train loss: 1.2102, Val loss: 2.0424, Epoch time = 52.878s
+        ```
+        
+    - My model
+        
+        ```bash
+        Epoch: 1, Train loss: 4.4904, Val loss: 3.8435, Epoch time = 56.186s
+        Epoch: 2, Train loss: 3.6351, Val loss: 3.4986, Epoch time = 56.136s
+        Epoch: 3, Train loss: 3.3299, Val loss: 3.2877, Epoch time = 55.834s
+        Epoch: 4, Train loss: 3.0969, Val loss: 3.1456, Epoch time = 55.873s
+        Epoch: 5, Train loss: 2.8875, Val loss: 2.9348, Epoch time = 55.933s
+        Epoch: 6, Train loss: 2.6291, Val loss: 2.7235, Epoch time = 55.994s
+        Epoch: 7, Train loss: 2.3478, Val loss: 2.4603, Epoch time = 55.888s
+        Epoch: 8, Train loss: 2.0843, Val loss: 2.2771, Epoch time = 56.395s
+        Epoch: 9, Train loss: 1.8769, Val loss: 2.1647, Epoch time = 56.071s
+        Epoch: 10, Train loss: 1.7149, Val loss: 2.1116, Epoch time = 56.210s
+        Epoch: 11, Train loss: 1.5778, Val loss: 2.0779, Epoch time = 56.123s
+        Epoch: 12, Train loss: 1.4668, Val loss: 2.0500, Epoch time = 56.168s
+        Epoch: 13, Train loss: 1.3670, Val loss: 2.0396, Epoch time = 60.289s
+        Epoch: 14, Train loss: 1.2777, Val loss: 2.0254, Epoch time = 73.164s
+        Epoch: 15, Train loss: 1.1974, Val loss: 2.0281, Epoch time = 62.193s
+        ```
+    Training loss trends of the two models are not exactly the same due to nondeterminism in weight initialization and dropout, but they show a similar trend. Nondeterminism can be removed by 1. using custom dropout instead of nn.Dropout, 2. using SGD instead of Adam, and 3. initializing the baseline model first and copying the weights to my model. After nondeterministic properties are removed, two models have the same training loss trend.
+
+- Test loss
+    - Baseline model
+        
+        ```bash
+        Test loss: 2.0176
+        ```
+        
+    - My model
+    
+        ```bash
+        Test loss: 2.0239
+        ```
