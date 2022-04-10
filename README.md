@@ -1,4 +1,4 @@
-Longer version for future reference: https://friendshipkim.notion.site/Implementing-Transformer-from-Scratch-5ec3145047774d5899df2470a73fc94f
+Extended version for future reference: https://friendshipkim.notion.site/Implementing-Transformer-from-Scratch-5ec3145047774d5899df2470a73fc94f
 
 # Implementing Transformer from Scratch
 The goal of this project is to implement a Transformer model from scratch, originally proposed in [Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf) paper. Among lots of good implementations, I chose PyTorch transformer - `torch.nn.transformer` as the baseline. My goal is to replicate the model and machine translation results from [this tutorial](https://pytorch.org/tutorials/beginner/translation_transformer.html).
