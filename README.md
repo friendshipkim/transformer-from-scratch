@@ -4,7 +4,7 @@ Longer version for future reference: https://friendshipkim.notion.site/Implement
 The goal of this project is to implement a Transformer model from scratch, originally proposed in [Attention is all you need](https://arxiv.org/pdf/1706.03762.pdf) paper. Among lots of good implementations, I chose PyTorch transformer - `torch.nn.transformer` as the baseline. My goal is to replicate the model and machine translation results from [this tutorial](https://pytorch.org/tutorials/beginner/translation_transformer.html).
 ## Transformer basics
 
-Given the model's popularity, I'll only provide a brief description of its architecture. Transformer makes use of the attention mechanism to draw global dependencies between input and output. It can achieve significantly more parallelization than RNN by avoiding recurrence with attention. The skeleton of the model is encoder-decoder architecture. The encoder maps an input sequence into continuous representations, which we refer to as memory. The decoder generates an output sequence based on memory.
+Given the popularity of the model, I'll only provide a brief description of its architecture. Transformer makes use of the attention mechanism to draw global dependencies between input and output. It can achieve significantly more parallelization than RNN by avoiding recurrence with attention. The skeleton of the model is encoder-decoder architecture. The encoder maps an input sequence into continuous representations, which is also called as memory. The decoder generates an output sequence based on memory.
 
 ### Model architecture
 
@@ -26,7 +26,7 @@ The model architecture is depicted in Figure 1 of the paper. It is divided into 
         - Feed-forward block
 - **Final classifier**
 
-In terms of implementation, we have four basic building blocks. Each building block performs the following:
+In terms of implementation, the model has four basic building blocks. Each building block performs the following:
 
 - Token embedding - Learned embeddings to convert input and output tokens to vectors with `d_model` dimensions.
 - Positional encoding - Indicates the relative or absolute position of the tokens in the sequence, and is added element-wise to token embeddings.
@@ -109,7 +109,7 @@ PyTorch transformer is the baseline I want to replicate. `torch.nn.modules.trans
 
 ## M**odel verification**
 
-Before we begin training, we need to make sure that my model has the same forward and backward path as the baseline. To do so, we created a list of model statistics and check if they are the same for the both models.
+Before training, I needed to make sure that my model has the same forward and backward pass as the baseline. To do so, I created a list of model statistics and check if they are the same for both models.
 
 ### **Checklist**
 
@@ -145,7 +145,7 @@ python ./tests/test_trainsformer.py
 
 ### Training
 
-Now let’s train two models with the simple machine translation dataset, Multi30K. All model configurations and training hyperparameters are specified in `config.py` file. 
+Now let’s train two models with the simple machine translation dataset, Multi30K. Adam optimizer is used, with a `batch_size` of 32, and `epochs` of 15. All model configurations and training hyperparameters are specified in `config.py` file.  
 
 To train the model: 
 
